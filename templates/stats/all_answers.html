@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Toutes les réponses{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{{ url_for('stats.overview') }}">Statistiques</a> / Toutes les réponses</p>
+<div class="page-head">
+  <div>
+    <h1>Toutes les réponses</h1>
+    <p class="muted">Tentatives classées par thème et formulaire.</p>
+  </div>
+</div>
+
+{% if not tree %}
+  <div class="card empty">Aucune réponse enregistrée pour le moment.</div>
+{% else %}
+  {% for node in tree %}
+  <div class="card">
+    <h2>{{ node.theme.name }}</h2>
+    {% for fb in node.forms %}
+    <h3 style="font-size:1rem;margin-top:1rem">
+      <a href="{{ url_for('stats.by_form', form_id=fb.form.id) }}">{{ fb.form.title }}</a>
+      <span class="badge blue">{{ fb.attempts|length }}</span>
+    </h3>
+    <table>
+      <thead><tr><th>Email</th><th>Date</th><th>Score</th><th>Résultat</th><th></th></tr></thead>
+      <tbody>
+      {% for a in fb.attempts %}
+        <tr>
+          <td>{{ a.email }}</td>
+          <td class="small muted">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{{ a.score }}%</td>
+          <td>{% if a.passed %}<span class="badge ok">Réussi</span>{% else %}<span class="badge ko">Échec</span>{% endif %}</td>
+          <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.attempt_detail', attempt_id=a.id) }}">Consulter</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Statistiques{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Statistiques</h1>
+    <p class="muted">Résultats consolidés par thème et par formulaire.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('stats.all_answers') }}">Toutes les réponses</a>
+</div>
+
+{% if not data %}
+  <div class="card empty">Aucun thème à afficher.</div>
+{% else %}
+  {% for d in data %}
+  <div class="card">
+    <div class="page-head" style="margin-bottom:.6rem">
+      <h2><a href="{{ url_for('stats.by_theme', theme_id=d.theme.id) }}">{{ d.theme.name }}</a></h2>
+      <span class="badge blue">{{ d.total_attempts }} tentative(s)</span>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="num">{{ d.theme.formulaires|length }}</div><div class="lbl">Formulaires</div></div>
+      <div class="stat"><div class="num">{{ d.total_attempts }}</div><div class="lbl">Tentatives</div></div>
+      <div class="stat"><div class="num">{{ d.avg }}%</div><div class="lbl">Score moyen</div></div>
+    </div>
+
+    {% if d.summaries %}
+    <table>
+      <thead><tr><th>Formulaire</th><th>Tentatives</th><th>Moyenne</th><th>Réussite</th><th></th></tr></thead>
+      <tbody>
+      {% for s in d.summaries %}
+        <tr>
+          <td><a href="{{ url_for('stats.by_form', form_id=s.form.id) }}">{{ s.form.title }}</a></td>
+          <td>{{ s.count }}</td>
+          <td>{{ s.avg }}%</td>
+          <td>{% if s.count %}{{ s.pass_rate }}%{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.by_form', form_id=s.form.id) }}">Détail</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted small">Aucun formulaire dans ce thème.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

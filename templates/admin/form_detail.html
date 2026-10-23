@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ form.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ form.theme.name }} › {{ form.title }}
+</div>
+<div class="page-head">
+  <div>
+    <h1>{{ form.title }}</h1>
+    <p class="muted">
+      {% if form.is_active %}<span class="badge ok">Actif</span>{% else %}<span class="badge soft">Inactif</span>{% endif %}
+      · Seuil de réussite {{ form.success_threshold }}% · {{ form.questions|length }} question(s)
+    </p>
+  </div>
+  <div class="btn-row">
+    <a class="btn btn-ghost" href="{{ url_for('admin.form_edit', form_id=form.id) }}">Modifier</a>
+    <a class="btn btn-ghost" href="{{ url_for('stats.by_form', form_id=form.id) }}">Statistiques</a>
+    <a class="btn btn-primary" href="{{ url_for('admin.question_create', form_id=form.id) }}">+ Question</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Lien à transmettre au stagiaire</h2>
+  <p class="muted small">Copiez cette URL et envoyez-la à la personne qui doit réaliser le questionnaire.</p>
+  <div class="url-box">
+    <input type="text" id="public-url" value="{{ public_url }}" readonly>
+    <button class="btn btn-blue" type="button" data-copy="#public-url">Copier</button>
+  </div>
+  <form method="post" action="{{ url_for('admin.form_regen_token', form_id=form.id) }}"
+        style="margin-top:.7rem" onsubmit="return confirm('Générer un nouveau lien ? L’ancien cessera de fonctionner.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-ghost btn-sm" type="submit">Régénérer le lien</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:1rem">
+  <h2>Questions</h2>
+  {% if not form.questions %}
+    <div class="empty">Aucune question. Ajoutez-en une pour rendre le formulaire utilisable.</div>
+  {% else %}
+    <table>
+      <thead><tr><th>#</th><th>Question</th><th>Réponses</th><th></th></tr></thead>
+      <tbody>
+      {% for q in form.questions %}
+        <tr>
+          <td class="muted">{{ loop.index }}</td>
+          <td>
+            {{ q.text|truncate(90) }}
+            {% if q.image_filename %}<span class="badge soft">image</span>{% endif %}
+          </td>
+          <td class="small muted">
+            {{ q.choices|length }} choix · {{ q.correct_ids|length }} correcte(s)
+          </td>
+          <td style="text-align:right; white-space:nowrap">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.question_edit', question_id=q.id) }}">Modifier</a>
+            <form method="post" action="{{ url_for('admin.question_delete', question_id=q.id) }}"
+                  style="display:inline" onsubmit="return confirm('Supprimer cette question ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:1rem">
+  <form method="post" action="{{ url_for('admin.form_delete', form_id=form.id) }}"
+        onsubmit="return confirm('Supprimer ce formulaire et tous ses résultats ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger" type="submit">Supprimer le formulaire</button>
+  </form>
+</div>
+{% endblock %}

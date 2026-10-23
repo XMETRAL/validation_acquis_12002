@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Statistiques — {{ theme.name }}{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{{ url_for('stats.overview') }}">Statistiques</a> / {{ theme.name }}</p>
+<div class="page-head">
+  <div>
+    <h1>{{ theme.name }}</h1>
+    {% if theme.description %}<p class="muted">{{ theme.description }}</p>{% endif %}
+  </div>
+</div>
+
+{% if not summaries %}
+  <div class="card empty">Aucun formulaire dans ce thème.</div>
+{% else %}
+<div class="card">
+  <table>
+    <thead><tr><th>Formulaire</th><th>Tentatives</th><th>Moyenne</th><th>Réussite</th><th></th></tr></thead>
+    <tbody>
+    {% for s in summaries %}
+      <tr>
+        <td>
+          <a href="{{ url_for('stats.by_form', form_id=s.form.id) }}">{{ s.form.title }}</a><br>
+          <span class="small muted">{{ s.form.questions|length }} question(s) · seuil {{ s.form.success_threshold }}%</span>
+        </td>
+        <td>{{ s.count }}</td>
+        <td>{{ s.avg }}%</td>
+        <td>
+          {% if s.count %}
+            <div class="bar-track" style="width:120px"><div class="bar-fill {{ 'good' if s.pass_rate >= 70 else ('mid' if s.pass_rate >= 40 else 'low') }}" style="width:{{ s.pass_rate }}%"></div></div>
+            <span class="small">{{ s.pass_rate }}%</span>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.by_form', form_id=s.form.id) }}">Détail</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

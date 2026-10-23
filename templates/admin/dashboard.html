@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Tableau de bord</h1>
+    <p class="muted">Bonjour {{ current_user.name }}. Gérez vos thèmes et formulaires.</p>
+  </div>
+  {% if current_user.is_super_admin %}
+  <a class="btn btn-primary" href="{{ url_for('admin.theme_create') }}">+ Nouveau thème</a>
+  {% endif %}
+</div>
+
+{% if not themes %}
+  <div class="card empty">
+    {% if current_user.is_super_admin %}
+      Aucun thème pour le moment. Créez-en un pour démarrer.
+    {% else %}
+      Aucun thème ne vous est attribué. Contactez un super administrateur.
+    {% endif %}
+  </div>
+{% else %}
+  <div class="grid">
+    {% for theme in themes %}
+    <div class="card theme-card">
+      <h2>{{ theme.name }}</h2>
+      {% if theme.description %}<p class="muted small">{{ theme.description }}</p>{% endif %}
+      <p class="small"><span class="badge blue">{{ theme.formulaires|length }} formulaire(s)</span></p>
+
+      {% if theme.formulaires %}
+      <table>
+        <tbody>
+        {% for f in theme.formulaires %}
+          <tr>
+            <td>
+              <a href="{{ url_for('admin.form_detail', form_id=f.id) }}">{{ f.title }}</a><br>
+              <span class="small muted">{{ f.questions|length }} question(s) · seuil {{ f.success_threshold }}%</span>
+            </td>
+            <td style="text-align:right">
+              {% if f.is_active %}<span class="badge ok">Actif</span>{% else %}<span class="badge soft">Inactif</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted small">Aucun formulaire.</p>
+      {% endif %}
+
+      <div class="btn-row" style="margin-top:1rem">
+        <a class="btn btn-blue btn-sm" href="{{ url_for('admin.form_create', theme_id=theme.id) }}">+ Formulaire</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.theme_edit', theme_id=theme.id) }}">Modifier le thème</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('stats.by_theme', theme_id=theme.id) }}">Statistiques</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier la question' if question else 'Nouvelle question' }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> ›
+  <a href="{{ url_for('admin.form_detail', form_id=form.id) }}">{{ form.title }}</a> ›
+  {{ 'Modifier la question' if question else 'Nouvelle question' }}
+</div>
+<h1>{{ 'Modifier la question' if question else 'Nouvelle question' }}</h1>
+
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="text">Intitulé de la question *</label>
+    <textarea id="text" name="text" required autofocus>{{ question.text if question else (posted.text if posted else '') }}</textarea>
+
+    <label>Image d'illustration (facultatif)</label>
+    <div class="dropzone" id="dropzone">
+      <span id="dz-hint">Glissez-déposez une image ici, ou cliquez pour parcourir</span>
+      <input type="file" id="image-input" name="image" accept="image/*" hidden>
+    </div>
+    {% if question and question.image_filename %}
+      <img id="image-preview" class="q-image"
+           src="{{ url_for('static', filename='uploads/' + question.image_filename) }}" alt="Illustration">
+      <label class="inline-check"><input type="checkbox" id="remove-image" name="remove_image"> Retirer l'image actuelle</label>
+    {% else %}
+      <img id="image-preview" class="q-image" style="display:none" alt="Aperçu">
+    {% endif %}
+
+    <label>Réponses (choix multiples) *</label>
+    <div class="field-hint">Cochez la ou les réponses correctes. Deux réponses minimum.</div>
+    <div id="choice-list">
+      {% if question %}
+        {% for c in question.choices %}
+        <div class="choice-editor">
+          <input type="text" name="choice_text" value="{{ c.text }}" placeholder="Texte de la réponse" maxlength="500">
+          <label class="ck"><input type="checkbox" {{ 'checked' if c.is_correct }}> Correcte</label>
+          <button type="button" class="btn btn-sm btn-danger del-choice">✕</button>
+          <input type="hidden" name="choice_is_correct" value="{{ '1' if c.is_correct else '0' }}" class="correct-val">
+        </div>
+        {% endfor %}
+      {% else %}
+        {% for i in range(3) %}
+        <div class="choice-editor">
+          <input type="text" name="choice_text" placeholder="Texte de la réponse" maxlength="500">
+          <label class="ck"><input type="checkbox"> Correcte</label>
+          <button type="button" class="btn btn-sm btn-danger del-choice">✕</button>
+          <input type="hidden" name="choice_is_correct" value="0" class="correct-val">
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <button type="button" id="add-choice" class="btn btn-ghost btn-sm" style="margin-top:.5rem">+ Ajouter une réponse</button>
+
+    <label for="explanation" style="margin-top:1.2rem">Explication de la réponse (facultatif)</label>
+    <div class="field-hint">Affichée au stagiaire dans le détail des résultats.</div>
+    <textarea id="explanation" name="explanation">{{ question.explanation if question else (posted.explanation if posted else '') }}</textarea>
+
+    <div class="btn-row" style="margin-top:1.3rem">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin.form_detail', form_id=form.id) }}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

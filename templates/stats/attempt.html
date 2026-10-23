@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Tentative — {{ attempt.email }}{% endblock %}
+{% block content %}
+<p class="breadcrumb">
+  <a href="{{ url_for('stats.overview') }}">Statistiques</a> /
+  <a href="{{ url_for('stats.by_form', form_id=attempt.formulaire.id) }}">{{ attempt.formulaire.title }}</a> /
+  Tentative
+</p>
+
+<div class="card">
+  <div class="page-head" style="margin-bottom:.4rem">
+    <div>
+      <h1 style="font-size:1.25rem">{{ attempt.email }}</h1>
+      <p class="muted small">{{ attempt.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:1.6rem;font-weight:800;color:{{ 'var(--ok)' if attempt.passed else 'var(--red)' }}">{{ attempt.score }}%</div>
+      {% if attempt.passed %}<span class="badge ok">Réussi</span>{% else %}<span class="badge ko">Échec</span>{% endif %}
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('stats.attempt_edit', attempt_id=attempt.id) }}" class="url-box" style="max-width:460px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="email" name="email" value="{{ attempt.email }}" required aria-label="Email">
+    <button class="btn btn-blue btn-sm" type="submit">Modifier l'email</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.1rem">Réponses ({{ rows|length }})</h2>
+  {% for r in rows %}
+  <div class="result-q {{ 'ok' if r.answer.is_correct else 'ko' }}">
+    <div class="page-head" style="margin-bottom:.3rem">
+      <p style="font-weight:600;margin:0">{{ r.question.text }}</p>
+      <span class="badge {{ 'ok' if r.answer.is_correct else 'ko' }}">{{ 'Correct' if r.answer.is_correct else 'Incorrect' }}</span>
+    </div>
+
+    {% for c in r.question.choices %}
+      {% set chosen = c.id in r.selected_ids %}
+      {% set good = c.id in r.correct_ids %}
+      <div class="choice {{ 'correct' if good else ('wrong' if chosen else '') }}" style="cursor:default;padding:.5rem .8rem;margin:.3rem 0">
+        <span>{% if good %}✓{% elif chosen %}✗{% else %}○{% endif %}</span>
+        <span>{{ c.text }}{% if chosen and not good %} <em class="muted small">(coché)</em>{% endif %}</span>
+      </div>
+    {% endfor %}
+
+    <div class="btn-row" style="margin-top:.6rem">
+      <form method="post" action="{{ url_for('stats.answer_toggle', answer_id=r.answer.id) }}" style="display:inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost btn-sm" type="submit">Basculer correct/incorrect</button>
+      </form>
+      <form method="post" action="{{ url_for('stats.answer_delete', answer_id=r.answer.id) }}" style="display:inline"
+            onsubmit="return confirm('Supprimer cette réponse ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <form method="post" action="{{ url_for('stats.attempt_delete', attempt_id=attempt.id) }}"
+        onsubmit="return confirm('Supprimer définitivement cette tentative ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger" type="submit">Supprimer la tentative</button>
+  </form>
+</div>
+{% endblock %}

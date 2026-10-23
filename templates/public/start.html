@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ form.title }}{% endblock %}
+{% block body %}
+<div class="quiz-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  <div class="card">
+    <p class="muted small">{{ form.theme.name }}</p>
+    <h1>{{ form.title }}</h1>
+    {% if form.description %}<p>{{ form.description }}</p>{% endif %}
+    <p class="muted">
+      {{ form.questions|length }} question(s) · choix multiples ·
+      seuil de réussite {{ form.success_threshold }}%
+    </p>
+    <form method="post" action="{{ url_for('public.begin', token=form.public_token) }}">
+      <label for="email">Votre adresse email *</label>
+      <input type="email" id="email" name="email" required autofocus placeholder="prenom.nom@exemple.fr">
+      <div class="field-hint">Elle permet d'identifier votre passage.</div>
+      <div class="btn-row" style="margin-top:1.3rem">
+        <button class="btn btn-primary btn-lg" type="submit">Commencer le questionnaire</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

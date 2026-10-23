@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Question — {{ question.formulaire.title }}{% endblock %}
+{% block content %}
+<p class="breadcrumb">
+  <a href="{{ url_for('stats.overview') }}">Statistiques</a> /
+  <a href="{{ url_for('stats.by_theme', theme_id=question.formulaire.theme.id) }}">{{ question.formulaire.theme.name }}</a> /
+  <a href="{{ url_for('stats.by_form', form_id=question.formulaire.id) }}">{{ question.formulaire.title }}</a> /
+  Question
+</p>
+
+<div class="card">
+  <h1 style="font-size:1.25rem">{{ question.text }}</h1>
+  {% if question.image_filename %}
+    <img class="q-image" src="{{ url_for('static', filename='uploads/' + question.image_filename) }}" alt="Illustration">
+  {% endif %}
+
+  <div class="stat-row">
+    <div class="stat"><div class="num">{{ total }}</div><div class="lbl">Réponses</div></div>
+    <div class="stat"><div class="num">{{ good }}</div><div class="lbl">Correctes</div></div>
+    <div class="stat"><div class="num">{% if rate is not none %}{{ rate }}%{% else %}—{% endif %}</div><div class="lbl">Taux de réussite</div></div>
+  </div>
+
+  {% if question.explanation %}
+  <div class="detail"><strong>Explication :</strong> {{ question.explanation }}</div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.1rem">Fréquence de sélection des propositions</h2>
+  <div class="bar-chart">
+    {% for cd in choice_data %}
+    <div class="bar-line">
+      <span>
+        {% if cd.choice.is_correct %}<span class="badge ok">✓</span>{% else %}<span class="badge soft">○</span>{% endif %}
+        {{ cd.choice.text|truncate(38) }}
+      </span>
+      <div class="bar-track">
+        <div class="bar-fill {{ 'good' if cd.choice.is_correct else 'low' }}" style="width:{{ cd.rate }}%"></div>
+      </div>
+      <span class="bar-val">{{ cd.count }} · {{ cd.rate }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="muted small" style="margin-top:.8rem">Les propositions marquées ✓ sont les bonnes réponses.</p>
+</div>
+{% endblock %}

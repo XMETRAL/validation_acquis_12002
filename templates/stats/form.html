@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Statistiques — {{ form.title }}{% endblock %}
+{% block content %}
+<p class="breadcrumb">
+  <a href="{{ url_for('stats.overview') }}">Statistiques</a> /
+  <a href="{{ url_for('stats.by_theme', theme_id=form.theme.id) }}">{{ form.theme.name }}</a> /
+  {{ form.title }}
+</p>
+<div class="page-head">
+  <div>
+    <h1>{{ form.title }}</h1>
+    <p class="muted">Seuil de réussite {{ form.success_threshold }}% · {{ form.questions|length }} question(s)</p>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><div class="num">{{ summary.count }}</div><div class="lbl">Tentatives</div></div>
+  <div class="stat"><div class="num">{{ summary.avg }}%</div><div class="lbl">Score moyen</div></div>
+  <div class="stat"><div class="num">{{ summary.passed }}</div><div class="lbl">Réussites</div></div>
+  <div class="stat"><div class="num">{{ summary.pass_rate }}%</div><div class="lbl">Taux de réussite</div></div>
+</div>
+
+{% if summary.count %}
+<div class="card">
+  <h2 style="font-size:1.1rem">Distribution des scores</h2>
+  {% set maxc = distribution|map(attribute='count')|max %}
+  <div class="cols">
+    {% for b in distribution %}
+    <div class="col">
+      <span class="c-val">{{ b.count or '' }}</span>
+      <div class="fill" style="height: {{ (b.count / maxc * 100)|round if maxc else 0 }}%"></div>
+      <span class="c-lbl">{{ b.label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2 style="font-size:1.1rem">Réussite par question</h2>
+  {% if not q_stats %}
+    <p class="muted small">Aucune question.</p>
+  {% else %}
+  <div class="bar-chart">
+    {% for qs in q_stats %}
+    <div class="bar-line">
+      <a href="{{ url_for('stats.by_question', question_id=qs.question.id) }}" title="{{ qs.question.text }}">
+        {{ qs.question.text|truncate(40) }}
+      </a>
+      <div class="bar-track">
+        {% if qs.rate is not none %}
+        <div class="bar-fill {{ 'good' if qs.rate >= 70 else ('mid' if qs.rate >= 40 else 'low') }}" style="width:{{ qs.rate }}%"></div>
+        {% endif %}
+      </div>
+      <span class="bar-val">{% if qs.rate is not none %}{{ qs.rate }}%{% else %}—{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.1rem">Tentatives</h2>
+  {% if not attempts %}
+    <p class="muted small">Aucune tentative enregistrée.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Email</th><th>Date</th><th>Score</th><th>Résultat</th><th></th></tr></thead>
+    <tbody>
+    {% for a in attempts %}
+      <tr>
+        <td>{{ a.email }}</td>
+        <td class="small muted">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>{{ a.score }}%</td>
+        <td>{% if a.passed %}<span class="badge ok">Réussi</span>{% else %}<span class="badge ko">Échec</span>{% endif %}</td>
+        <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.attempt_detail', attempt_id=a.id) }}">Consulter</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

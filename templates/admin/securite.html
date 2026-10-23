@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Sécurité — Filtre IP{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Sécurité — Filtre d'accès par IP</h1>
+</div>
+
+{% if actif and not liste.strip() %}
+<div class="flash error">Le filtre est activé mais la liste est vide : <strong>aucune IP n'est bloquée</strong>. Ajoutez au moins une adresse autorisée.</div>
+{% endif %}
+<div class="card">
+  <p style="margin-top:0">IP vue par le serveur (connexion entrante) : <strong id="ip-courante">{{ ip_courante }}</strong>
+    <span class="muted small">— 127.0.0.1 si vous accédez à l'app en local.</span></p>
+  <p style="margin:.4rem 0">Votre IP publique détectée : <strong id="ip-pub" class="muted">détection…</strong>
+    <button type="button" class="btn btn-primary btn-sm" id="btn-add-pub" onclick="ajouterMonIp('ip-pub')" disabled>Ajouter mon IP publique</button>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="ajouterMonIp('ip-courante')">Ajouter l'IP serveur</button></p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="inline-check">
+      <input type="checkbox" name="ip_filtre_actif" {{ 'checked' if actif }}>
+      Activer le filtre par IP publique sur la partie administration
+    </label>
+    <p class="muted small" style="margin:.4rem 0 .8rem">
+      Une entrée par ligne — IP exacte (<code>90.12.34.56</code>) ou plage CIDR (<code>90.12.34.0/24</code>).
+      Toute l'administration est protégée, <strong>y compris la page de connexion</strong> : une IP non autorisée voit une page « Accès refusé » sans formulaire de login.
+      Les <strong>questionnaires stagiaires</strong> (liens publics) restent accessibles depuis n'importe quelle IP.
+      Pensez à ajouter votre propre IP avant d'activer le filtre. L'accès local (<code>127.0.0.1</code>) reste <strong>toujours autorisé</strong>.
+      Si le filtre est actif mais la liste <strong>vide</strong>, aucun blocage n'est appliqué (sécurité anti-verrouillage).
+    </p>
+    <label for="ip_autorisees">Adresses autorisées</label>
+    <textarea name="ip_autorisees" id="ip_autorisees" rows="8"
+              style="font-family:monospace"
+              placeholder="90.12.34.56&#10;80.0.0.0/24">{{ liste }}</textarea>
+    <div style="margin-top:1rem"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
+  </form>
+</div>
+
+<script>
+function ajouterMonIp(srcId){
+  var ip=document.getElementById(srcId).textContent.trim();
+  var ta=document.getElementById('ip_autorisees');
+  if(!ip || !/^[0-9a-fA-F:.]+$/.test(ip)) return;
+  var lignes=ta.value.split('\n').map(function(l){return l.trim();});
+  if(lignes.indexOf(ip)>=0) return;
+  ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+ip;
+}
+// Détection de l'IP publique côté navigateur (service externe).
+(function(){
+  var el=document.getElementById('ip-pub'), btn=document.getElementById('btn-add-pub');
+  fetch('https://api.ipify.org?format=json').then(function(r){return r.json();}).then(function(d){
+    if(d && d.ip){ el.textContent=d.ip; el.classList.remove('muted'); if(btn) btn.disabled=false; }
+    else { el.textContent='indéterminée'; }
+  }).catch(function(){ el.textContent='indéterminée (service injoignable)'; });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Résultats — {{ form.title }}{% endblock %}
+{% block body %}
+<div class="quiz-wrap">
+  <div class="card">
+    <p class="muted small">{{ form.theme.name }} — {{ form.title }}</p>
+
+    <div class="score-ring" style="background: {{ 'var(--ok)' if attempt.passed else 'var(--red)' }}">
+      <span class="pct">{{ attempt.score|round|int }}%</span>
+      <span class="st">{{ 'Réussi' if attempt.passed else 'Échec' }}</span>
+    </div>
+
+    <p style="text-align:center" class="muted">
+      Seuil de réussite : {{ threshold }}% ·
+      {{ attempt.answers|selectattr('is_correct')|list|length }}/{{ attempt.answers|length }} bonne(s) réponse(s)
+    </p>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:1.4rem 0">
+
+    <h2 style="font-size:1.15rem">Détail des réponses</h2>
+    {% for d in details %}
+    <div class="result-q {{ 'ok' if d.is_correct else 'ko' }}">
+      <p style="margin:.2rem 0">
+        <span class="badge {{ 'ok' if d.is_correct else 'ko' }}">
+          {{ 'Correct' if d.is_correct else 'Incorrect' }}
+        </span>
+        {% if d.success_rate is not none %}
+        <span class="muted small">— {{ d.success_rate }}% de réussite globale</span>
+        {% endif %}
+      </p>
+      <p style="font-weight:600;margin:.35rem 0">{{ d.question.text }}</p>
+
+      {% for c in d.question.choices %}
+        {% set chosen = c.id in d.selected_ids %}
+        {% set good = c.id in d.correct_ids %}
+        <div class="choice {{ 'correct' if good else ('wrong' if chosen else '') }}" style="cursor:default">
+          <span>
+            {% if good %}✓{% elif chosen %}✗{% else %}○{% endif %}
+          </span>
+          <span>
+            {{ c.text }}
+            {% if chosen and not good %}<em class="muted small">(votre choix)</em>{% endif %}
+            {% if good and not chosen %}<em class="muted small">(réponse attendue)</em>{% endif %}
+          </span>
+        </div>
+      {% endfor %}
+
+      {% if not d.is_correct and d.question.explanation %}
+      <div class="detail">
+        <strong>Explication :</strong> {{ d.question.explanation }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="btn-row" style="margin-top:1.4rem">
+      <a class="btn btn-ghost" href="{{ url_for('public.start', token=form.public_token) }}">Recommencer</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

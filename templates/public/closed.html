@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Formulaire indisponible{% endblock %}
+{% block body %}
+<div class="quiz-wrap">
+  <div class="card">
+    <p class="muted small">{{ form.theme.name }}</p>
+    <h1>{{ form.title }}</h1>
+    {% if empty %}
+    <p class="empty">Ce formulaire ne contient pas encore de question.<br>Merci de revenir plus tard.</p>
+    {% else %}
+    <p class="empty">Ce formulaire n'est pas accessible pour le moment.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

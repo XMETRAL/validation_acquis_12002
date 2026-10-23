@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center">
+  <h1>Accès refusé</h1>
+  <p>Votre adresse IP n'est pas autorisée à accéder à l'administration.</p>
+  <p class="muted small" style="margin-top:1rem">
+    IP détectée : <strong>{{ ip or 'indéterminée' }}</strong><br>
+    Communiquez-la à votre administrateur pour qu'il l'ajoute à la liste des adresses autorisées.
+  </p>
+</div>
+{% endblock %}

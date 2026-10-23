@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier le thème' if theme else 'Nouveau thème' }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ theme.name if theme else 'Nouveau thème' }}</div>
+<h1>{{ 'Modifier le thème' if theme else 'Nouveau thème' }}</h1>
+
+<div class="card">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="name">Nom du thème *</label>
+    <input type="text" id="name" name="name" value="{{ theme.name if theme else '' }}" required autofocus>
+    <label for="description">Description</label>
+    <textarea id="description" name="description">{{ theme.description if theme else '' }}</textarea>
+
+    {% if current_user.is_super_admin %}
+    <label>Administrateurs du thème</label>
+    <div class="field-hint">Les utilisateurs cochés pourront gérer les formulaires de ce thème.</div>
+    <div class="checklist">
+      {% for u in users %}
+      <label>
+        <input type="checkbox" name="admins" value="{{ u.id }}"
+          {{ 'checked' if theme and u in theme.admins }}>
+        {{ u.name }} <span class="muted small">({{ u.email }})</span>
+        {% if u.is_super_admin %}<span class="badge blue">super admin</span>{% endif %}
+      </label>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="btn-row" style="margin-top:1.3rem">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">Annuler</a>
+    </div>
+  </form>
+</div>
+
+{% if theme and current_user.is_super_admin %}
+<div class="card" style="margin-top:1rem">
+  <form method="post" action="{{ url_for('admin.theme_delete', theme_id=theme.id) }}"
+        onsubmit="return confirm('Supprimer ce thème et tous ses formulaires ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger" type="submit">Supprimer le thème</button>
+    <span class="muted small">Cette action supprime aussi les formulaires, questions et résultats associés.</span>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

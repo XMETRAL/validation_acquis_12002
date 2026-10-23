@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier le formulaire' if form else 'Nouveau formulaire' }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ theme.name }} ›
+  {{ form.title if form else 'Nouveau formulaire' }}
+</div>
+<h1>{{ 'Modifier le formulaire' if form else 'Nouveau formulaire' }}</h1>
+
+<div class="card">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title">Titre *</label>
+    <input type="text" id="title" name="title" value="{{ form.title if form else '' }}" required autofocus>
+    <label for="description">Description</label>
+    <textarea id="description" name="description">{{ form.description if form else '' }}</textarea>
+    <label for="success_threshold">Seuil de réussite (%)</label>
+    <input type="number" id="success_threshold" name="success_threshold" min="0" max="100"
+           value="{{ form.success_threshold if form else 70 }}">
+    <label class="inline-check">
+      <input type="checkbox" name="is_active" {{ 'checked' if not form or form.is_active }}> Formulaire actif
+    </label>
+    <div class="field-hint">Un formulaire inactif n'est plus accessible via son lien public.</div>
+    <div class="btn-row" style="margin-top:1.3rem">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin.form_detail', form_id=form.id) if form else url_for('admin.dashboard') }}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

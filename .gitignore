@@ -1,0 +1,42 @@
+# --- Secrets & configuration locale ---
+.env
+.env2
+.env.*
+!.env.example
+instance/secret_key
+instance/*.db
+
+# --- Certificats / clés privées ---
+*.pem
+*.key
+*.crt
+certs/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Logs ---
+log/*.log
+*.log
+
+# --- Uploads utilisateurs (données, pas du code) ---
+static/uploads/*
+!static/uploads/.gitkeep
+
+# --- Divers / sauvegardes ---
+_Old/
+temp_*/
+*.bak
+*.bak_*
+*.exe
+
+# --- OS / éditeurs ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

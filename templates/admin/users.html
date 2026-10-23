@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Utilisateurs</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.user_create') }}">+ Nouvel utilisateur</a>
+</div>
+<div class="card">
+  <table>
+    <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Thèmes</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>{{ u.name }}</td>
+        <td class="muted">{{ u.email }}</td>
+        <td>{% if u.is_super_admin %}<span class="badge blue">super admin</span>{% else %}<span class="badge soft">admin</span>{% endif %}</td>
+        <td class="small muted">{{ u.themes|map(attribute='name')|join(', ') or '—' }}</td>
+        <td style="text-align:right; white-space:nowrap">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.user_edit', user_id=u.id) }}">Modifier</a>
+          {% if u.id != current_user.id %}
+          <form method="post" action="{{ url_for('admin.user_delete', user_id=u.id) }}"
+                style="display:inline" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Question {{ number }} / {{ total }}{% endblock %}
+{% block body %}
+{# Deux propositions seulement (ex. vrai/faux) : une seule réponse possible #}
+{% set unique = choices|length == 2 %}
+<div class="quiz-wrap{{ ' wide' if question.image_filename }}">
+  <p class="muted small">{{ form.title }} — question {{ number }} sur {{ total }}</p>
+  <div class="progress"><span style="width: {{ (number / total * 100)|round }}%"></span></div>
+
+  <div class="card{{ ' q-layout' if question.image_filename }}">
+    {% if question.image_filename %}
+    {# Image à gauche, question + réponses à droite (une colonne sur petit écran) #}
+    <div class="q-media">
+      <img class="q-image" src="{{ url_for('static', filename='uploads/' + question.image_filename) }}" alt="Illustration de la question">
+      <p class="q-image-hint">Cliquez sur l'image pour l'agrandir.</p>
+    </div>
+    {% endif %}
+
+    <div class="q-side">
+      <h1 style="font-size:1.35rem">{{ question.text }}</h1>
+      <p class="muted small">{{ 'Une seule réponse possible.' if unique else 'Plusieurs réponses possibles.' }}</p>
+
+      <form method="post" action="{{ url_for('public.answer', token=form.public_token) }}">
+        {% for c in choices %}
+        <label class="choice">
+          <input type="{{ 'radio' if unique else 'checkbox' }}" name="choice" value="{{ c.id }}">
+          <span>{{ c.text }}</span>
+        </label>
+        {% endfor %}
+        <div class="btn-row" style="margin-top:1.2rem">
+          <button class="btn btn-primary btn-lg" type="submit">
+            {{ 'Valider et voir les résultats' if number == total else 'Valider et continuer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier l’utilisateur' if user else 'Nouvel utilisateur' }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('admin.users') }}">Utilisateurs</a> › {{ user.name if user else 'Nouvel utilisateur' }}</div>
+<h1>{{ 'Modifier l’utilisateur' if user else 'Nouvel utilisateur' }}</h1>
+
+<div class="card">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="name">Nom *</label>
+    <input type="text" id="name" name="name" value="{{ user.name if user else '' }}" required>
+
+    {% if user %}
+      <label>Email</label>
+      <input type="email" value="{{ user.email }}" disabled>
+      <div class="field-hint">L'email ne peut pas être modifié après création.</div>
+    {% else %}
+      <label for="email">Email *</label>
+      <input type="email" id="email" name="email" required>
+    {% endif %}
+
+    <label for="password">Mot de passe {{ '(laisser vide pour ne pas changer)' if user else '*' }}</label>
+    <input type="password" id="password" name="password" minlength="8" {{ 'required' if not user }} autocomplete="new-password">
+    <div class="field-hint">8 caractères minimum.</div>
+
+    <label class="inline-check">
+      <input type="checkbox" name="is_super_admin" {{ 'checked' if user and user.is_super_admin }}> Super administrateur
+    </label>
+    <div class="field-hint">Un super administrateur gère les utilisateurs et tous les thèmes.</div>
+
+    <label>Thèmes administrés</label>
+    <div class="checklist">
+      {% for t in themes %}
+      <label>
+        <input type="checkbox" name="themes" value="{{ t.id }}" {{ 'checked' if user and t in user.themes }}>
+        {{ t.name }}
+      </label>
+      {% else %}
+      <span class="muted small">Aucun thème disponible.</span>
+      {% endfor %}
+    </div>
+
+    <div class="btn-row" style="margin-top:1.3rem">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin.users') }}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
