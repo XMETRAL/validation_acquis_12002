@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ form.title }}{% endblock %}
 {% block content %}
+<style>
+  .tabs{display:flex;gap:.3rem;border-bottom:2px solid var(--line);margin:1rem 0 1.2rem;flex-wrap:wrap}
+  .tabs button{appearance:none;background:none;border:none;cursor:pointer;
+    font:inherit;font-weight:600;color:var(--muted);padding:.6rem 1rem;
+    border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.active{color:var(--cyan,#1CA9E0);border-bottom-color:var(--cyan,#1CA9E0)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  .info-grid{display:grid;grid-template-columns:200px 1fr;gap:.55rem 1rem}
+  @media(max-width:560px){.info-grid{grid-template-columns:1fr}}
+  .info-grid dt{color:var(--muted);font-size:.9rem}
+  .info-grid dd{margin:0;font-weight:600}
+</style>
+
 <div class="breadcrumb">
   <a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ form.theme.name }} › {{ form.title }}
 </div>
@@ -9,68 +24,192 @@
     <h1>{{ form.title }}</h1>
     <p class="muted">
       {% if form.is_active %}<span class="badge ok">Actif</span>{% else %}<span class="badge soft">Inactif</span>{% endif %}
-      · Seuil de réussite {{ form.success_threshold }}% · {{ form.questions|length }} question(s)
+      · Seuil {{ form.success_threshold }}% · {{ form.questions|length }} question(s) · {{ summary.count }} tentative(s)
     </p>
   </div>
-  <div class="btn-row">
-    <a class="btn btn-ghost" href="{{ url_for('admin.form_edit', form_id=form.id) }}">Modifier</a>
-    <a class="btn btn-ghost" href="{{ url_for('stats.by_form', form_id=form.id) }}">Statistiques</a>
-    <a class="btn btn-primary" href="{{ url_for('admin.question_create', form_id=form.id) }}">+ Question</a>
-  </div>
 </div>
 
-<div class="card">
-  <h2>Lien à transmettre au stagiaire</h2>
-  <p class="muted small">Copiez cette URL et envoyez-la à la personne qui doit réaliser le questionnaire.</p>
-  <div class="url-box">
-    <input type="text" id="public-url" value="{{ public_url }}" readonly>
-    <button class="btn btn-blue" type="button" data-copy="#public-url">Copier</button>
-  </div>
-  <form method="post" action="{{ url_for('admin.form_regen_token', form_id=form.id) }}"
-        style="margin-top:.7rem" onsubmit="return confirm('Générer un nouveau lien ? L’ancien cessera de fonctionner.');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn btn-ghost btn-sm" type="submit">Régénérer le lien</button>
-  </form>
-</div>
+<nav class="tabs" role="tablist">
+  <button type="button" class="tab-btn active" data-tab="param">Paramétrage</button>
+  <button type="button" class="tab-btn" data-tab="stats">Statistiques</button>
+  <button type="button" class="tab-btn" data-tab="questions">Questions</button>
+</nav>
 
-<div class="card" style="margin-top:1rem">
-  <h2>Questions</h2>
-  {% if not form.questions %}
-    <div class="empty">Aucune question. Ajoutez-en une pour rendre le formulaire utilisable.</div>
-  {% else %}
+<!-- ======================= ONGLET PARAMÉTRAGE ======================= -->
+<section id="tab-param" class="tab-panel active">
+  <div class="card">
+    <div class="page-head" style="margin-bottom:.8rem">
+      <h2 style="font-size:1.1rem">Informations du programme</h2>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('admin.form_edit', form_id=form.id) }}">Modifier</a>
+    </div>
+    <dl class="info-grid">
+      <dt>Logiciel</dt><dd>{{ form.theme.name }}</dd>
+      <dt>Description</dt><dd>{{ form.title }}</dd>
+      <dt>Certification — Logiciel</dt><dd>{{ form.diploma_line1 or form.theme.diploma_line1 or form.theme.name }}</dd>
+      <dt>Certification — Formation</dt><dd>{{ form.diploma_label or form.title }}</dd>
+      <dt>Délivrer une certification</dt><dd>{{ 'Oui' if form.diploma_enabled else 'Non' }}</dd>
+      <dt>Seuil de réussite</dt><dd>{{ form.success_threshold }} %</dd>
+      <dt>État</dt><dd>{% if form.is_active %}Actif{% else %}Inactif{% endif %}</dd>
+      <dt>Questions</dt><dd>{{ form.questions|length }}</dd>
+    </dl>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h2 style="font-size:1.1rem">Lien à transmettre au stagiaire</h2>
+    <p class="muted small">Copiez cette URL et envoyez-la à la personne qui doit réaliser le questionnaire.</p>
+    <div class="url-box">
+      <input type="text" id="public-url" value="{{ public_url }}" readonly>
+      <button class="btn btn-blue" type="button" data-copy="#public-url">Copier</button>
+    </div>
+    <form method="post" action="{{ url_for('admin.form_regen_token', form_id=form.id) }}"
+          style="margin-top:.7rem" onsubmit="return regenConfirm(this);">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="regen_password" id="regen_password">
+      <button class="btn btn-ghost btn-sm" type="submit">Régénérer le lien</button>
+      <span class="muted small">Action sensible : l'ancien lien cessera de fonctionner. Un mot de passe est demandé.</span>
+    </form>
+    <script>
+      function regenConfirm(f){
+        var p = prompt("Régénérer le lien casse l'ancien lien.\nSaisissez le mot de passe pour confirmer :");
+        if (p === null) return false;
+        f.regen_password.value = p;
+        return true;
+      }
+    </script>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <form method="post" action="{{ url_for('admin.form_delete', form_id=form.id) }}"
+          onsubmit="return confirm('Supprimer ce test et tous ses résultats ?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger" type="submit">Supprimer le test</button>
+    </form>
+  </div>
+</section>
+
+<!-- ======================= ONGLET STATISTIQUES ======================= -->
+<section id="tab-stats" class="tab-panel">
+  <div class="stat-row">
+    <div class="stat"><div class="num">{{ summary.count }}</div><div class="lbl">Tentatives</div></div>
+    <div class="stat"><div class="num">{{ summary.avg }}%</div><div class="lbl">Score moyen</div></div>
+    <div class="stat"><div class="num">{{ summary.passed }}</div><div class="lbl">Réussites</div></div>
+    <div class="stat"><div class="num">{{ summary.pass_rate }}%</div><div class="lbl">Taux de réussite</div></div>
+  </div>
+
+  {% if summary.count %}
+  <div class="card">
+    <h2 style="font-size:1.1rem">Distribution des scores</h2>
+    {% set maxc = distribution|map(attribute='count')|max %}
+    <div class="cols">
+      {% for b in distribution %}
+      <div class="col">
+        <span class="c-val">{{ b.count or '' }}</span>
+        <div class="fill" style="height: {{ (b.count / maxc * 100)|round if maxc else 0 }}%"></div>
+        <span class="c-lbl">{{ b.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2 style="font-size:1.1rem">Réussite par question</h2>
+    {% if not q_stats %}
+      <p class="muted small">Aucune question.</p>
+    {% else %}
+    <div class="bar-chart">
+      {% for qs in q_stats %}
+      <div class="bar-line">
+        <a href="{{ url_for('stats.by_question', question_id=qs.question.id) }}" title="{{ qs.question.text }}">
+          {{ qs.question.text|truncate(40) }}
+        </a>
+        <div class="bar-track">
+          {% if qs.rate is not none %}
+          <div class="bar-fill {{ 'good' if qs.rate >= 70 else ('mid' if qs.rate >= 40 else 'low') }}" style="width:{{ qs.rate }}%"></div>
+          {% endif %}
+        </div>
+        <span class="bar-val">{% if qs.rate is not none %}{{ qs.rate }}%{% else %}—{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:1.1rem">Tentatives</h2>
+    {% if not attempts %}
+      <p class="muted small">Aucune tentative enregistrée.</p>
+    {% else %}
     <table>
-      <thead><tr><th>#</th><th>Question</th><th>Réponses</th><th></th></tr></thead>
+      <thead><tr><th>Stagiaire</th><th>Email</th><th>Date</th><th>Score</th><th>Résultat</th><th></th></tr></thead>
       <tbody>
-      {% for q in form.questions %}
+      {% for a in attempts %}
         <tr>
-          <td class="muted">{{ loop.index }}</td>
-          <td>
-            {{ q.text|truncate(90) }}
-            {% if q.image_filename %}<span class="badge soft">image</span>{% endif %}
-          </td>
-          <td class="small muted">
-            {{ q.choices|length }} choix · {{ q.correct_ids|length }} correcte(s)
-          </td>
-          <td style="text-align:right; white-space:nowrap">
-            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.question_edit', question_id=q.id) }}">Modifier</a>
-            <form method="post" action="{{ url_for('admin.question_delete', question_id=q.id) }}"
-                  style="display:inline" onsubmit="return confirm('Supprimer cette question ?');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
-            </form>
-          </td>
+          <td>{{ a.full_name }}</td>
+          <td class="small muted">{{ a.email }}</td>
+          <td class="small muted">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{{ a.score }}%</td>
+          <td>{% if a.passed %}<span class="badge ok">Réussi</span>{% else %}<span class="badge ko">Échec</span>{% endif %}</td>
+          <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.attempt_detail', attempt_id=a.id) }}">Consulter</a></td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
-  {% endif %}
-</div>
+    {% endif %}
+  </div>
+</section>
 
-<div class="card" style="margin-top:1rem">
-  <form method="post" action="{{ url_for('admin.form_delete', form_id=form.id) }}"
-        onsubmit="return confirm('Supprimer ce formulaire et tous ses résultats ?');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn btn-danger" type="submit">Supprimer le formulaire</button>
-  </form>
-</div>
+<!-- ======================= ONGLET QUESTIONS ======================= -->
+<section id="tab-questions" class="tab-panel">
+  <div class="card">
+    <div class="page-head" style="margin-bottom:.8rem">
+      <h2 style="font-size:1.1rem">Questions</h2>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('admin.question_create', form_id=form.id) }}">+ Question</a>
+    </div>
+    {% if not form.questions %}
+      <div class="empty">Aucune question. Ajoutez-en une pour rendre le test utilisable.</div>
+    {% else %}
+      <table>
+        <thead><tr><th>#</th><th>Question</th><th>Réponses</th><th></th></tr></thead>
+        <tbody>
+        {% for q in form.questions %}
+          <tr>
+            <td class="muted">{{ loop.index }}</td>
+            <td>
+              {{ q.text|truncate(90) }}
+              {% if q.image_filename %}<span class="badge soft">image</span>{% endif %}
+            </td>
+            <td class="small muted">
+              {{ q.choices|length }} choix · {{ q.correct_ids|length }} correcte(s)
+            </td>
+            <td style="text-align:right; white-space:nowrap">
+              <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.question_edit', question_id=q.id) }}">Modifier</a>
+              <form method="post" action="{{ url_for('admin.question_delete', question_id=q.id) }}"
+                    style="display:inline" onsubmit="return confirm('Supprimer cette question ?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+(function(){
+  var btns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+  function show(name){
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
+    panels.forEach(function(p){ p.classList.toggle('active', p.id === 'tab-' + name); });
+    try { history.replaceState(null, '', '#' + name); } catch(e){}
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.tab); }); });
+  var start = (location.hash || '').replace('#','');
+  if (['param','stats','questions'].indexOf(start) !== -1) show(start);
+})();
+</script>
 {% endblock %}

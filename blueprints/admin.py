@@ -1,6 +1,6 @@
-"""Partie administration : utilisateurs, thèmes, formulaires, questions."""
-from flask import (Blueprint, abort, flash, redirect, render_template, request,
-                   url_for)
+"""Partie administration : utilisateurs, logiciels, formulaires, questions."""
+from flask import (Blueprint, abort, current_app, flash, redirect,
+                   render_template, request, url_for)
 from flask_login import current_user, login_required
 
 from models import Choice, Formulaire, Question, Theme, User, db
@@ -66,11 +66,51 @@ def parse_choices():
 @login_required
 def dashboard():
     themes = visible_themes()
-    return render_template("admin/dashboard.html", themes=themes)
+    monthly = _tests_par_mois()
+    return render_template(
+        "admin/dashboard.html", themes=themes, monthly=monthly,
+        monthly_total=sum(d["count"] for d in monthly),
+        monthly_max=max((d["count"] for d in monthly), default=0))
+
+
+_MOIS_ABBR = ["", "janv.", "févr.", "mars", "avr.", "mai", "juin",
+              "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+
+
+def _derniers_12_mois():
+    from datetime import datetime
+    now = datetime.utcnow()
+    seq, yy, mm = [], now.year, now.month
+    for _ in range(12):
+        seq.append((yy, mm))
+        mm -= 1
+        if mm == 0:
+            mm, yy = 12, yy - 1
+    seq.reverse()
+    return seq
+
+
+def _tests_par_mois():
+    """Nombre de tests réalisés par mois sur les 12 derniers mois glissants."""
+    from datetime import datetime
+    from models import Attempt
+    seq = _derniers_12_mois()
+    start = datetime(seq[0][0], seq[0][1], 1)
+    counts = {ym: 0 for ym in seq}
+    q = Attempt.query.join(Formulaire).filter(Attempt.created_at >= start)
+    if not current_user.is_super_admin:
+        theme_ids = [t.id for t in current_user.themes]
+        q = q.filter(Formulaire.theme_id.in_(theme_ids)) if theme_ids else q.filter(db.false())
+    for a in q.all():
+        key = (a.created_at.year, a.created_at.month)
+        if key in counts:
+            counts[key] += 1
+    return [{"label": _MOIS_ABBR[mm], "ym": f"{_MOIS_ABBR[mm]} {str(yy)[2:]}",
+             "count": counts[(yy, mm)]} for (yy, mm) in seq]
 
 
 # --------------------------------------------------------------------------- #
-# Thèmes                                                                       #
+# Logiciels                                                                       #
 # --------------------------------------------------------------------------- #
 @admin_bp.route("/themes/nouveau", methods=["GET", "POST"])
 @login_required
@@ -79,14 +119,18 @@ def theme_create():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         if not name:
-            flash("Le nom du thème est obligatoire.", "error")
+            flash("Le nom du logiciel est obligatoire.", "error")
         else:
-            theme = Theme(name=name, description=request.form.get("description", "").strip())
+            theme = Theme(
+                name=name,
+                description=request.form.get("description", "").strip(),
+                diploma_line1=request.form.get("diploma_line1", "").strip(),
+            )
             admin_ids = request.form.getlist("admins")
             theme.admins = User.query.filter(User.id.in_(admin_ids)).all()
             db.session.add(theme)
             db.session.commit()
-            flash("Thème créé.", "success")
+            flash("Logiciel créé.", "success")
             return redirect(url_for("admin.dashboard"))
     return render_template("admin/theme_form.html", theme=None, users=User.query.order_by(User.name).all())
 
@@ -98,15 +142,16 @@ def theme_edit(theme_id):
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         if not name:
-            flash("Le nom du thème est obligatoire.", "error")
+            flash("Le nom du logiciel est obligatoire.", "error")
         else:
             theme.name = name
             theme.description = request.form.get("description", "").strip()
+            theme.diploma_line1 = request.form.get("diploma_line1", "").strip()
             if current_user.is_super_admin:
                 admin_ids = request.form.getlist("admins")
                 theme.admins = User.query.filter(User.id.in_(admin_ids)).all()
             db.session.commit()
-            flash("Thème mis à jour.", "success")
+            flash("Logiciel mis à jour.", "success")
             return redirect(url_for("admin.dashboard"))
     return render_template("admin/theme_form.html", theme=theme, users=User.query.order_by(User.name).all())
 
@@ -121,7 +166,7 @@ def theme_delete(theme_id):
             delete_question_image(q.image_filename)
     db.session.delete(theme)
     db.session.commit()
-    flash("Thème supprimé.", "info")
+    flash("Logiciel supprimé.", "info")
     return redirect(url_for("admin.dashboard"))
 
 
@@ -133,14 +178,16 @@ def theme_delete(theme_id):
 def form_create(theme_id):
     theme = get_theme_or_403(theme_id)
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
+        title = request.form.get("title", "").strip()  # = Description (nom du test)
         if not title:
-            flash("Le titre du formulaire est obligatoire.", "error")
+            flash("La description (nom du test) est obligatoire.", "error")
         else:
             form = Formulaire(
                 theme=theme,
                 title=title,
-                description=request.form.get("description", "").strip(),
+                diploma_line1=request.form.get("diploma_line1", "").strip(),  # Logiciel
+                diploma_label=request.form.get("diploma_label", "").strip(),  # Formation
+                diploma_enabled=bool(request.form.get("diploma_enabled")),
                 success_threshold=_clamp_threshold(request.form.get("success_threshold")),
                 is_active=bool(request.form.get("is_active")),
                 public_token=Formulaire.make_token(),
@@ -157,7 +204,21 @@ def form_create(theme_id):
 def form_detail(form_id):
     form = get_form_or_403(form_id)
     public_url = url_for("public.start", token=form.public_token, _external=True)
-    return render_template("admin/form_detail.html", form=form, public_url=public_url)
+    # Données de l'onglet Statistiques (mêmes calculs que la page stats)
+    from blueprints.stats import form_summary, question_stats
+    summary = form_summary(form)
+    q_stats = [question_stats(q) for q in form.questions]
+    buckets = [0] * 10
+    for a in form.attempts:
+        buckets[min(int((a.score or 0) // 10), 9)] += 1
+    distribution = [{"label": f"{i*10}-{i*10+10}", "count": c}
+                    for i, c in enumerate(buckets)]
+    attempts = sorted(form.attempts, key=lambda a: a.created_at, reverse=True)
+    return render_template(
+        "admin/form_detail.html", form=form, public_url=public_url,
+        summary=summary, q_stats=q_stats, distribution=distribution,
+        attempts=attempts,
+    )
 
 
 @admin_bp.route("/formulaires/<int:form_id>/modifier", methods=["GET", "POST"])
@@ -165,12 +226,14 @@ def form_detail(form_id):
 def form_edit(form_id):
     form = get_form_or_403(form_id)
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
+        title = request.form.get("title", "").strip()  # = Description (nom du test)
         if not title:
-            flash("Le titre du formulaire est obligatoire.", "error")
+            flash("La description (nom du test) est obligatoire.", "error")
         else:
             form.title = title
-            form.description = request.form.get("description", "").strip()
+            form.diploma_line1 = request.form.get("diploma_line1", "").strip()  # Logiciel
+            form.diploma_label = request.form.get("diploma_label", "").strip()  # Formation
+            form.diploma_enabled = bool(request.form.get("diploma_enabled"))
             form.success_threshold = _clamp_threshold(request.form.get("success_threshold"))
             form.is_active = bool(request.form.get("is_active"))
             db.session.commit()
@@ -196,6 +259,11 @@ def form_delete(form_id):
 @login_required
 def form_regen_token(form_id):
     form = get_form_or_403(form_id)
+    # Mot de passe exigé, configurable via .env2 (REGEN_PASSWORD), défaut « aaaaaa »
+    attendu = current_app.config.get("REGEN_PASSWORD", "aaaaaa")
+    if request.form.get("regen_password", "") != attendu:
+        flash("Mot de passe incorrect : le lien n'a pas été régénéré.", "error")
+        return redirect(url_for("admin.form_detail", form_id=form.id))
     form.public_token = Formulaire.make_token()
     db.session.commit()
     flash("Nouveau lien généré. L'ancien lien ne fonctionne plus.", "info")

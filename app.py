@@ -103,9 +103,39 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
+        _ensure_new_columns()
         seed_super_admin(app)
 
     return app
+
+
+def _ensure_new_columns():
+    """Ajoute les colonnes récentes aux tables déjà créées (SQLite n'applique
+    pas de migration via create_all). Idempotent : ne fait rien si la colonne
+    existe déjà. Couvre aussi PostgreSQL (ALTER TABLE ... ADD COLUMN)."""
+    from sqlalchemy import inspect, text
+    # (table, colonne, définition SQL)
+    attendues = [
+        ("formulaire", "diploma_label", "VARCHAR(200) DEFAULT ''"),
+        ("formulaire", "diploma_line1", "VARCHAR(200) DEFAULT ''"),
+        ("formulaire", "diploma_enabled", "BOOLEAN DEFAULT 1"),
+        ("attempt", "first_name", "VARCHAR(120) DEFAULT ''"),
+        ("attempt", "last_name", "VARCHAR(120) DEFAULT ''"),
+        ("attempt", "certificate_number", "VARCHAR(40)"),
+        ("theme", "diploma_line1", "VARCHAR(200) DEFAULT ''"),
+        ("theme", "diploma_line2", "VARCHAR(200) DEFAULT ''"),
+    ]
+    insp = inspect(db.engine)
+    tables = set(insp.get_table_names())
+    for table, col, ddl in attendues:
+        if table not in tables:
+            continue  # create_all vient de la créer avec la colonne
+        existantes = {c["name"] for c in insp.get_columns(table)}
+        if col in existantes:
+            continue
+        with db.engine.begin() as conn:
+            conn.execute(text(f'ALTER TABLE {table} ADD COLUMN {col} {ddl}'))
+        print(f"[migration] colonne ajoutée : {table}.{col}")
 
 
 def seed_super_admin(app):

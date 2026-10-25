@@ -27,9 +27,9 @@
     <label class="inline-check">
       <input type="checkbox" name="is_super_admin" {{ 'checked' if user and user.is_super_admin }}> Super administrateur
     </label>
-    <div class="field-hint">Un super administrateur gère les utilisateurs et tous les thèmes.</div>
+    <div class="field-hint">Un super administrateur gère les utilisateurs et tous les logiciels.</div>
 
-    <label>Thèmes administrés</label>
+    <label>Logiciels administrés</label>
     <div class="checklist">
       {% for t in themes %}
       <label>
@@ -37,7 +37,7 @@
         {{ t.name }}
       </label>
       {% else %}
-      <span class="muted small">Aucun thème disponible.</span>
+      <span class="muted small">Aucun logiciel disponible.</span>
       {% endfor %}
     </div>
 

@@ -1,27 +1,55 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Modifier le formulaire' if form else 'Nouveau formulaire' }}{% endblock %}
+{% block title %}{{ 'Modifier le test' if form else 'Nouveau test' }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
 <div class="breadcrumb">
   <a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ theme.name }} ›
-  {{ form.title if form else 'Nouveau formulaire' }}
+  {{ form.title if form else 'Nouveau test' }}
 </div>
-<h1>{{ 'Modifier le formulaire' if form else 'Nouveau formulaire' }}</h1>
+<h1>{{ 'Modifier le test' if form else 'Nouveau test' }}</h1>
 
 <div class="card">
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="title">Titre *</label>
-    <input type="text" id="title" name="title" value="{{ form.title if form else '' }}" required autofocus>
-    <label for="description">Description</label>
-    <textarea id="description" name="description">{{ form.description if form else '' }}</textarea>
+
+    <label>Logiciel</label>
+    <input type="text" value="{{ theme.name }}" disabled>
+
+    <label for="title">Description</label>
+    <input type="text" id="title" name="title"
+           value="{{ form.title if form else '' }}" required
+           placeholder="ex. Fastboost 1">
+    <div class="field-hint">Nom du test (affiché dans le tableau de bord).</div>
+
+    <div style="border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .4rem;margin:1.1rem 0">
+      <div style="font-weight:600;margin-bottom:.7rem">Certification</div>
+      <label for="diploma_line1">Logiciel</label>
+      <input type="text" id="diploma_line1" name="diploma_line1"
+             value="{{ form.diploma_line1 if form and form.diploma_line1 else (theme.diploma_line1 or theme.name) }}"
+             placeholder="ex. Pennylane">
+      <div class="field-hint">1<sup>re</sup> ligne de la certification.</div>
+
+      <label for="diploma_label">Formation</label>
+      <input type="text" id="diploma_label" name="diploma_label"
+             value="{{ form.diploma_label if form else '' }}"
+             placeholder="ex. Comptabilité de base">
+      <div class="field-hint">2<sup>e</sup> ligne de la certification. Laissée vide, la description est utilisée.</div>
+    </div>
+
     <label for="success_threshold">Seuil de réussite (%)</label>
     <input type="number" id="success_threshold" name="success_threshold" min="0" max="100"
            value="{{ form.success_threshold if form else 70 }}">
+
     <label class="inline-check">
-      <input type="checkbox" name="is_active" {{ 'checked' if not form or form.is_active }}> Formulaire actif
+      <input type="checkbox" name="diploma_enabled" {{ 'checked' if not form or form.diploma_enabled }}> Délivrer une certification en cas de réussite
     </label>
-    <div class="field-hint">Un formulaire inactif n'est plus accessible via son lien public.</div>
+    <div class="field-hint">Décoché, aucune certification n'est proposée au stagiaire à la fin de ce test.</div>
+
+    <label class="inline-check">
+      <input type="checkbox" name="is_active" {{ 'checked' if not form or form.is_active }}> Test actif
+    </label>
+    <div class="field-hint">Un test inactif n'est plus accessible via son lien public.</div>
+
     <div class="btn-row" style="margin-top:1.3rem">
       <button class="btn btn-primary" type="submit">Enregistrer</button>
       <a class="btn btn-ghost" href="{{ url_for('admin.form_detail', form_id=form.id) if form else url_for('admin.dashboard') }}">Annuler</a>

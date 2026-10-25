@@ -16,9 +16,16 @@
       seuil de réussite {{ form.success_threshold }}%
     </p>
     <form method="post" action="{{ url_for('public.begin', token=form.public_token) }}">
+      <label for="first_name">Votre prénom *</label>
+      <input type="text" id="first_name" name="first_name" required autofocus
+             value="{{ request.form.first_name or '' }}" placeholder="Prénom">
+      <label for="last_name">Votre nom *</label>
+      <input type="text" id="last_name" name="last_name" required
+             value="{{ request.form.last_name or '' }}" placeholder="Nom">
       <label for="email">Votre adresse email *</label>
-      <input type="email" id="email" name="email" required autofocus placeholder="prenom.nom@exemple.fr">
-      <div class="field-hint">Elle permet d'identifier votre passage.</div>
+      <input type="email" id="email" name="email" required
+             value="{{ request.form.email or '' }}" placeholder="prenom.nom@exemple.fr">
+      <div class="field-hint">Nom, prénom et email figureront sur votre certification en cas de réussite.</div>
       <div class="btn-row" style="margin-top:1.3rem">
         <button class="btn btn-primary btn-lg" type="submit">Commencer le questionnaire</button>
       </div>

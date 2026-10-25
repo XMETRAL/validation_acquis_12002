@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Classement des stagiaires{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Classement des stagiaires</h1>
+    <p class="muted">Trié par nombre de tests réussis, puis par meilleur score.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('stats.overview') }}">Statistiques</a>
+</div>
+
+<div class="card">
+  <form method="get" class="btn-row" style="gap:.5rem;align-items:center;margin:0">
+    <label for="theme" class="muted small">Filtrer par logiciel —</label>
+    <select id="theme" name="theme" onchange="this.form.submit()">
+      <option value="">Tous les logiciels</option>
+      {% for t in themes %}
+      <option value="{{ t.id }}" {{ 'selected' if selected and selected.id == t.id }}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button class="btn btn-blue btn-sm" type="submit">Filtrer</button></noscript>
+  </form>
+</div>
+
+<div class="card">
+  {% if not rows %}
+    <div class="empty">Aucune tentative sur ce périmètre.</div>
+  {% else %}
+  <table>
+    <thead><tr>
+      <th>#</th><th>Stagiaire</th><th>Email</th>
+      <th>Réussis</th><th>Meilleur score</th><th>Tentatives</th>
+    </tr></thead>
+    <tbody>
+    {% for s in rows %}
+      <tr>
+        <td class="muted">{{ loop.index }}</td>
+        <td><a href="{{ url_for('stats.trainee', email=s.email) }}">{{ s.name or s.email }}</a></td>
+        <td class="muted small">{{ s.email }}</td>
+        <td style="font-weight:700">{{ s.passed }}</td>
+        <td>{{ s.best|round|int }}%</td>
+        <td class="muted">{{ s.attempts }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

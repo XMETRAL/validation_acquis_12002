@@ -4,13 +4,107 @@
 <div class="page-head">
   <div>
     <h1>Statistiques</h1>
-    <p class="muted">Résultats consolidés par thème et par formulaire.</p>
+    <p class="muted">Résultats consolidés par logiciel et par formulaire.</p>
   </div>
-  <a class="btn btn-ghost" href="{{ url_for('stats.all_answers') }}">Toutes les réponses</a>
+  <div class="btn-row" style="gap:.5rem;margin:0">
+    <a class="btn btn-ghost" href="{{ url_for('stats.trainees') }}">Stagiaires</a>
+    <a class="btn btn-ghost" href="{{ url_for('stats.ranking') }}">Classement des stagiaires</a>
+    <a class="btn btn-ghost" href="{{ url_for('stats.all_answers') }}">Toutes les réponses</a>
+  </div>
 </div>
 
+<style>
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:#fff;border:1px solid var(--line,#e2e7ee);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+  .kpi .n{font-size:1.9rem;font-weight:800;color:#004878;line-height:1}
+  .kpi .l{font-size:.8rem;color:#6a7889;margin-top:4px}
+  .kpi .edge{position:absolute;left:0;top:0;bottom:0;width:5px}
+  .charts{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:18px}
+  @media(max-width:860px){.charts{grid-template-columns:1fr}}
+  .chartcard{background:#fff;border:1px solid var(--line,#e2e7ee);border-radius:16px;padding:18px 20px}
+  .chartcard h2{font-size:1rem;margin:0 0 2px;color:#182230}
+  .chartcard .cap{font-size:.78rem;color:#6a7889;margin-bottom:14px}
+  .mbars{display:flex;align-items:flex-end;gap:2.4%;height:150px}
+  .mbars .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .mbars .v{font-size:.7rem;font-weight:700;color:#004878;margin-bottom:4px;min-height:1em}
+  .mbars .b{width:70%;max-width:30px;border-radius:6px 6px 2px 2px;min-height:3px;
+    background:linear-gradient(180deg,#39c0f5,#009CE4 60%,#0082c4)}
+  .mbars .col.cur .b{background:linear-gradient(180deg,#ff8a5c,#FC6000 60%,#E4003C)}
+  .mbars .x{font-size:.64rem;color:#8a98a8;margin-top:6px}
+  .mbars .col.cur .x{color:#FC6000;font-weight:700}
+  .donut-wrap{display:flex;align-items:center;gap:20px}
+  .legend{font-size:.82rem;color:#243442}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
+  .tbar{margin:10px 0}
+  .tbar .top{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:4px}
+  .tbar .track{height:10px;background:#eef2f7;border-radius:6px;overflow:hidden}
+  .tbar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#009CE4,#39c0f5)}
+</style>
+
+{% if kpis.total %}
+<div class="kpis">
+  <div class="kpi"><div class="edge" style="background:#009CE4"></div><div class="n">{{ kpis.total }}</div><div class="l">Tests réalisés</div></div>
+  <div class="kpi"><div class="edge" style="background:#FC6000"></div><div class="n">{{ kpis.pass_rate }}%</div><div class="l">Taux de réussite</div></div>
+  <div class="kpi"><div class="edge" style="background:#004878"></div><div class="n">{{ kpis.avg }}%</div><div class="l">Score moyen</div></div>
+  <div class="kpi"><div class="edge" style="background:#E4003C"></div><div class="n">{{ kpis.stagiaires }}</div><div class="l">Stagiaires</div></div>
+</div>
+
+<div class="charts">
+  <div class="chartcard">
+    <h2>Tests réalisés par mois</h2>
+    <div class="cap">12 derniers mois glissants</div>
+    <div class="mbars">
+      {% for m in monthly %}
+      <div class="col {{ 'cur' if loop.last }}" title="{{ m.ym }} : {{ m.count }}">
+        <div class="v">{{ m.count or '' }}</div>
+        <div class="b" style="height:{{ (6 + (m.count / monthly_max * 94)) if monthly_max else 2 }}%"></div>
+        <div class="x">{{ m.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="chartcard">
+    <h2>Taux de réussite</h2>
+    <div class="cap">Réussites vs échecs</div>
+    <div class="donut-wrap">
+      {% set circ = 2 * 3.14159 * 52 %}
+      <svg viewBox="0 0 120 120" style="width:130px;height:130px">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#eef2f7" stroke-width="15"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#009CE4" stroke-width="15" stroke-linecap="round"
+          stroke-dasharray="{{ (circ * kpis.pass_rate / 100)|round(1) }} {{ circ|round(1) }}"
+          transform="rotate(-90 60 60)"/>
+        <text x="60" y="58" text-anchor="middle" font-size="26" font-weight="800" fill="#004878">{{ kpis.pass_rate }}%</text>
+        <text x="60" y="76" text-anchor="middle" font-size="10" fill="#6a7889">réussite</text>
+      </svg>
+      <div class="legend">
+        <div><span class="dot" style="background:#009CE4"></span>{{ kpis.passed }} réussi(s)</div>
+        <div style="margin-top:8px"><span class="dot" style="background:#eef2f7;border:1px solid #d7dee8"></span>{{ kpis.total - kpis.passed }} échec(s)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if per_theme %}
+<div class="chartcard" style="margin-bottom:18px">
+  <h2>Répartition des tests par logiciel</h2>
+  <div class="cap">Nombre de tentatives · taux de réussite · score moyen</div>
+  {% for p in per_theme %}
+  <div class="tbar">
+    <div class="top">
+      <span><strong>{{ p.name }}</strong></span>
+      <span class="muted">{{ p.count }} tentative(s) · {{ p.pass_rate }}% réussite · {{ p.avg }}% moy.</span>
+    </div>
+    <div class="track"><div class="fill" style="width:{{ (p.count / per_max * 100)|round if per_max else 0 }}%"></div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
 {% if not data %}
-  <div class="card empty">Aucun thème à afficher.</div>
+  <div class="card empty">Aucun logiciel à afficher.</div>
 {% else %}
   {% for d in data %}
   <div class="card">
@@ -41,7 +135,7 @@
       </tbody>
     </table>
     {% else %}
-    <p class="muted small">Aucun formulaire dans ce thème.</p>
+    <p class="muted small">Aucun formulaire dans ce logiciel.</p>
     {% endif %}
   </div>
   {% endfor %}

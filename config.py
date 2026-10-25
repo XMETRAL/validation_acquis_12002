@@ -62,6 +62,9 @@ class Config:
     DEFAULT_ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "XXXXXXXXXXXXXXX")
     DEFAULT_ADMIN_NAME = os.environ.get("ADMIN_NAME", "Super Administrateur")
 
+    # Mot de passe exigé pour régénérer un lien public (action sensible)
+    REGEN_PASSWORD = os.environ.get("REGEN_PASSWORD", "aaaaaa")
+
     # Durée de validité d'un lien de réinitialisation de mot de passe
     RESET_TOKEN_MAX_AGE = 3600  # secondes
 

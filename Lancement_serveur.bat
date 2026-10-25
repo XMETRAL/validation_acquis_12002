@@ -1,7 +1,16 @@
 @echo off
 cd /d "%~dp0"
 REM === Site validation_acquis (serveur_web) : exe dedie + server.py/.env2 ===
+REM Garde mono-instance : si un lanceur tourne deja, on sort au lieu de
+REM demarrer une 2e boucle (sinon les boucles se tuent mutuellement via le
+REM taskkill /IM ci-dessous, d'ou un redemarrage en boucle du serveur).
+set "LOCK=%~dp0launcher.lock"
+2>nul ( 9>"%LOCK%" ( call :run ) ) && goto :eof
+echo Un lanceur est deja actif pour ce site : fermeture de ce doublon.
+ping -n 3 127.0.0.1 >nul
+goto :eof
 
+:run
 REM 1) Port lu dans .env2 (pour arreter proprement l'instance precedente)
 set "PORT="
 if exist ".env2" for /f "usebackq tokens=1,2 delims==" %%A in (".env2") do if /i "%%A"=="BACKEND_PORT" set "PORT=%%B"

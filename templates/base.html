@@ -7,7 +7,7 @@
   <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script>
-    // Applique le thème mémorisé avant l'affichage pour éviter tout clignotement
+    // Applique le logiciel mémorisé avant l'affichage pour éviter tout clignotement
     (function () {
       try {
         var t = localStorage.getItem("va-theme");
@@ -39,7 +39,7 @@
       {% endif %}
       <button id="theme-toggle" class="theme-toggle" type="button"
               style="{{ '' if current_user.is_authenticated else 'margin-left:auto;' }}"
-              aria-label="Changer de thème">☾</button>
+              aria-label="Changer de logiciel">☾</button>
     </div>
   </header>
 

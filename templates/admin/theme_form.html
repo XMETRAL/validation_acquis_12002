@@ -1,21 +1,29 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Modifier le thème' if theme else 'Nouveau thème' }}{% endblock %}
+{% block title %}{{ 'Modifier le logiciel' if theme else 'Nouveau logiciel' }}{% endblock %}
 {% block main_class %}narrow{% endblock %}
 {% block content %}
-<div class="breadcrumb"><a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ theme.name if theme else 'Nouveau thème' }}</div>
-<h1>{{ 'Modifier le thème' if theme else 'Nouveau thème' }}</h1>
+<div class="breadcrumb"><a href="{{ url_for('admin.dashboard') }}">Tableau de bord</a> › {{ theme.name if theme else 'Nouveau logiciel' }}</div>
+<h1>{{ 'Modifier le logiciel' if theme else 'Nouveau logiciel' }}</h1>
 
 <div class="card">
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="name">Nom du thème *</label>
+    <label for="name">Nom du logiciel *</label>
     <input type="text" id="name" name="name" value="{{ theme.name if theme else '' }}" required autofocus>
     <label for="description">Description</label>
     <textarea id="description" name="description">{{ theme.description if theme else '' }}</textarea>
 
+    <label for="diploma_line1">Certification — Logiciel (par défaut)</label>
+    <input type="text" id="diploma_line1" name="diploma_line1"
+           value="{{ theme.diploma_line1 if theme else '' }}"
+           placeholder="ex. Pennylane">
+    <div class="field-hint">1<sup>re</sup> ligne de la certification, pré-remplie pour les tests du logiciel
+      (modifiable sur chaque test). Laissée vide, le nom du logiciel est utilisé.
+      La 2<sup>e</sup> ligne (Formation) se définit sur chaque test.</div>
+
     {% if current_user.is_super_admin %}
-    <label>Administrateurs du thème</label>
-    <div class="field-hint">Les utilisateurs cochés pourront gérer les formulaires de ce thème.</div>
+    <label>Administrateurs du logiciel</label>
+    <div class="field-hint">Les utilisateurs cochés pourront gérer les formulaires de ce logiciel.</div>
     <div class="checklist">
       {% for u in users %}
       <label>
@@ -38,9 +46,9 @@
 {% if theme and current_user.is_super_admin %}
 <div class="card" style="margin-top:1rem">
   <form method="post" action="{{ url_for('admin.theme_delete', theme_id=theme.id) }}"
-        onsubmit="return confirm('Supprimer ce thème et tous ses formulaires ?');">
+        onsubmit="return confirm('Supprimer ce logiciel et tous ses formulaires ?');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn btn-danger" type="submit">Supprimer le thème</button>
+    <button class="btn btn-danger" type="submit">Supprimer le logiciel</button>
     <span class="muted small">Cette action supprime aussi les formulaires, questions et résultats associés.</span>
   </form>
 </div>

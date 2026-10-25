@@ -10,8 +10,10 @@
 <div class="card">
   <div class="page-head" style="margin-bottom:.4rem">
     <div>
-      <h1 style="font-size:1.25rem">{{ attempt.email }}</h1>
-      <p class="muted small">{{ attempt.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+      <h1 style="font-size:1.25rem">
+        <a href="{{ url_for('stats.trainee', email=attempt.email) }}">{{ attempt.full_name }}</a>
+      </h1>
+      <p class="muted small">{{ attempt.email }} · {{ attempt.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
     </div>
     <div style="text-align:right">
       <div style="font-size:1.6rem;font-weight:800;color:{{ 'var(--ok)' if attempt.passed else 'var(--red)' }}">{{ attempt.score }}%</div>
@@ -19,11 +21,45 @@
     </div>
   </div>
 
-  <form method="post" action="{{ url_for('stats.attempt_edit', attempt_id=attempt.id) }}" class="url-box" style="max-width:460px">
+  <form method="post" action="{{ url_for('stats.attempt_edit', attempt_id=attempt.id) }}" style="max-width:560px">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="email" name="email" value="{{ attempt.email }}" required aria-label="Email">
-    <button class="btn btn-blue btn-sm" type="submit">Modifier l'email</button>
+    <div class="btn-row" style="gap:.5rem;flex-wrap:wrap;align-items:flex-end">
+      <span><label class="muted small" for="fn">Prénom</label><br>
+        <input type="text" id="fn" name="first_name" value="{{ attempt.first_name }}" aria-label="Prénom"></span>
+      <span><label class="muted small" for="ln">Nom</label><br>
+        <input type="text" id="ln" name="last_name" value="{{ attempt.last_name }}" aria-label="Nom"></span>
+      <span><label class="muted small" for="em">Email</label><br>
+        <input type="email" id="em" name="email" value="{{ attempt.email }}" required aria-label="Email"></span>
+      <button class="btn btn-blue btn-sm" type="submit">Enregistrer</button>
+    </div>
   </form>
+
+  {% if attempt.passed and attempt.formulaire.diploma_enabled %}
+  <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+  {% if attempt.certificate_number %}<p class="muted small">N° de certificat : <strong>{{ attempt.certificate_number }}</strong></p>{% endif %}
+  <form method="get" action="{{ url_for('stats.attempt_diploma', attempt_id=attempt.id) }}">
+    <div class="btn-row" style="gap:.5rem;align-items:center;flex-wrap:wrap">
+      <label for="modele" class="muted small">Certification —</label>
+      <select id="modele" name="modele">
+        {% for n, label in diploma_models %}<option value="{{ n }}">{{ n }} — {{ label }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-primary btn-sm" type="submit">Rééditer la certification (PDF)</button>
+    </div>
+  </form>
+  {% if issued %}
+  <p class="muted small" style="margin-top:.8rem">Certifications déjà téléchargées :</p>
+  <div class="btn-row" style="gap:.4rem;flex-wrap:wrap">
+    {% for d in issued %}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('stats.diploma_file', diploma_id=d.id) }}">
+      Modèle {{ d.modele }} · {{ d.updated_at.strftime('%d/%m/%Y') }}{% if d.count and d.count > 1 %} ({{ d.count }}×){% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% elif attempt.passed and not attempt.formulaire.diploma_enabled %}
+  <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+  <p class="muted small">Les certifications sont désactivées pour ce test.</p>
+  {% endif %}
 </div>
 
 <div class="card">

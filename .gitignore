@@ -28,6 +28,9 @@ log/*.log
 static/uploads/*
 !static/uploads/.gitkeep
 
+# --- Diplômes archivés (PDF générés) ---
+instance/diplomes/
+
 # --- Divers / sauvegardes ---
 _Old/
 temp_*/

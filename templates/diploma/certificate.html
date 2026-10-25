@@ -1,0 +1,209 @@
+{#- Certificat AXE Informatique — inspiré des certifications éditeurs (type Cegid).
+    Format A4 paysage (1000 x 707).
+    Variables : modele, logo_data_uri, nom_complet, prenom, nom, ligne1 (Logiciel),
+    ligne2 (Formation), date_txt, numero, signataire, signataire_titre, validite. -#}
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Certificat de réussite</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Great+Vibes&display=swap">
+<style>
+  :root{--cyan:#009CE4;--navy:#004878;--navy2:#003152;--red:#E4003C;--orange:#FC6000;
+        --ink:#243442;--muted:#6a7889;--line:#dfe4ec;--bluetint:#EAF5FC;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  .card{width:1000px;height:707px;position:relative;overflow:hidden;background:#fff;
+        font-family:"Sora",system-ui,sans-serif;color:var(--ink)}
+  .card *{box-sizing:border-box}
+</style></head>
+<body>
+
+{% set numero = numero or '—' %}
+{% set signataire = signataire or 'AXE Informatique' %}
+{% set signataire_titre = signataire_titre or 'Organisme de formation' %}
+
+{% macro cube(px, op) -%}
+<svg viewBox="0 0 100 100" style="width:{{px}}px;height:{{px}}px;display:block{% if op %};opacity:{{op}}{% endif %}">
+<polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/>
+<polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/>
+<polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+{%- endmacro %}
+
+{% macro signature(color) -%}{%- endmacro %}
+
+{% if modele == 1 %}
+<div class="card" style="font-family:'Sora',sans-serif;padding:56px 66px;display:flex;flex-direction:column">
+  <!-- Liseré tri-couleur en haut -->
+  <div style="position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#009CE4 0 55%,#E4003C 55% 80%,#FC6000 80% 100%)"></div>
+
+  <!-- Cube graphique (hero) à droite -->
+  <svg viewBox="0 0 100 100" style="position:absolute;right:70px;top:232px;width:262px;height:262px">
+    <polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/>
+    <polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/>
+    <polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+  <div style="position:absolute;right:300px;top:206px">{{ cube(44) }}</div>
+  <div style="position:absolute;right:92px;top:176px">{{ cube(30) }}</div>
+
+  <!-- En-tête : logo + badge CERTIFIÉ moderne -->
+  <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2">
+    <img src="{{ logo_data_uri }}" style="height:46px;object-fit:contain">
+    <div style="display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;padding:9px 18px 9px 14px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.5px">
+      <svg viewBox="0 0 24 24" style="width:19px;height:19px"><circle cx="12" cy="12" r="11" fill="#009CE4"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      CERTIFIÉ
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <div style="position:relative;z-index:2;margin-top:52px;max-width:600px;flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--cyan)">Certification · AXE Informatique</div>
+    <div style="font-size:14px;color:var(--muted);margin-top:22px">Décerné à</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:60px;line-height:1;color:var(--navy);margin-top:4px">{{ nom_complet }}</div>
+    <div style="display:flex;gap:6px;margin-top:18px">
+      <span style="width:52px;height:6px;border-radius:3px;background:#009CE4"></span>
+      <span style="width:24px;height:6px;border-radius:3px;background:#E4003C"></span>
+      <span style="width:14px;height:6px;border-radius:3px;background:#FC6000"></span>
+    </div>
+    <div style="margin-top:26px;font-size:15px;color:var(--ink);line-height:1.5">a complété avec succès la validation d'acquis<br>pour être certifié pour la solution</div>
+    <div style="margin-top:14px;font-family:'Outfit',sans-serif;font-weight:700;font-size:28px;color:var(--navy);line-height:1.1">{{ ligne1 }}</div>
+    <div style="font-family:'Outfit',sans-serif;font-weight:500;font-size:19px;color:var(--ink);margin-top:2px">{{ ligne2 }}</div>
+  </div>
+
+  <!-- Pied : date + N° (gauche) · signature (droite) -->
+  <div style="position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);padding-top:18px">
+    <div>
+      <div style="font-size:14px;font-weight:600;color:var(--ink)">Le {{ date_txt }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">N° {{ numero }}{% if validite %} · {{ validite }}{% endif %}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="width:200px;margin-left:auto">
+        <div style="font-weight:700;font-size:14px;color:var(--navy)">AXE Informatique</div>
+        <div style="font-size:12px;color:var(--muted)">Service consulting</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-top:1px">Gagnez en liberté</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ============================ 2 — Moderne centré ============================ #}
+{% elif modele == 2 %}
+<div class="card" style="font-family:'Sora',sans-serif;padding:50px 70px;display:flex;flex-direction:column;align-items:center;text-align:center">
+  <div style="position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#009CE4 0 55%,#E4003C 55% 80%,#FC6000 80% 100%)"></div>
+  <svg viewBox="0 0 100 100" style="position:absolute;left:50%;top:150px;transform:translateX(-50%);width:420px;height:420px;opacity:.05">
+    <polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/><polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/><polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+  <img src="{{ logo_data_uri }}" style="height:50px;object-fit:contain;position:relative">
+  <div style="margin-top:16px;display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;padding:8px 17px 8px 13px;border-radius:999px;font-weight:700;font-size:12.5px;letter-spacing:.5px">
+    <svg viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="12" r="11" fill="#009CE4"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>CERTIFIÉ</div>
+  <div style="margin-top:30px;font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--cyan);position:relative">Certification · AXE Informatique</div>
+  <div style="font-size:14px;color:var(--muted);margin-top:22px;position:relative">Décerné à</div>
+  <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:56px;line-height:1;color:var(--navy);margin-top:6px;position:relative">{{ nom_complet }}</div>
+  <div style="display:flex;gap:6px;margin-top:18px;position:relative">
+    <span style="width:52px;height:6px;border-radius:3px;background:#009CE4"></span><span style="width:24px;height:6px;border-radius:3px;background:#E4003C"></span><span style="width:14px;height:6px;border-radius:3px;background:#FC6000"></span></div>
+  <div style="margin-top:24px;font-size:15px;color:var(--ink);line-height:1.5;max-width:580px;position:relative">a complété avec succès la validation d'acquis pour être certifié pour la solution</div>
+  <div style="margin-top:12px;font-family:'Outfit',sans-serif;font-weight:700;font-size:27px;color:var(--navy);position:relative">{{ ligne1 }}</div>
+  <div style="font-family:'Outfit',sans-serif;font-weight:500;font-size:18px;color:var(--ink);margin-top:2px;position:relative">{{ ligne2 }}</div>
+  <div style="position:absolute;left:70px;right:70px;bottom:50px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);padding-top:16px">
+    <div style="text-align:left"><div style="font-size:13.5px;font-weight:600;color:var(--ink)">Le {{ date_txt }}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">N° {{ numero }}</div></div>
+    <div style="text-align:right">
+      <div style="width:200px;margin-left:auto">
+        <div style="font-weight:700;font-size:13.5px;color:var(--navy)">AXE Informatique</div>
+        <div style="font-size:12px;color:var(--muted)">Service consulting</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-top:1px">Gagnez en liberté</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ============================ 3 — Bandeau navy ============================ #}
+{% elif modele == 3 %}
+<div class="card" style="font-family:'Sora',sans-serif;display:flex;flex-direction:column">
+  <div style="height:150px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 60px;position:relative;overflow:hidden">
+    <svg viewBox="0 0 100 100" style="position:absolute;right:230px;top:-30px;width:170px;height:170px;opacity:.16"><polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/><polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/><polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+    <img src="{{ logo_data_uri }}" style="height:46px;object-fit:contain;background:#fff;padding:9px 13px;border-radius:10px;position:relative">
+    <div style="display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--navy);padding:9px 18px 9px 14px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.5px;position:relative">
+      <svg viewBox="0 0 24 24" style="width:19px;height:19px"><circle cx="12" cy="12" r="11" fill="#009CE4"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>CERTIFIÉ</div>
+  </div>
+  <div style="height:6px;background:linear-gradient(90deg,#009CE4 0 55%,#E4003C 55% 80%,#FC6000 80% 100%)"></div>
+  <div style="flex:1;padding:44px 60px;position:relative">
+    <div style="position:absolute;right:56px;bottom:40px">{{ cube(120) }}</div>
+    <div style="position:absolute;right:160px;bottom:118px">{{ cube(40) }}</div>
+    <div style="font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--cyan)">Certification · AXE Informatique</div>
+    <div style="font-size:14px;color:var(--muted);margin-top:20px">Décerné à</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:56px;line-height:1;color:var(--navy);margin-top:4px">{{ nom_complet }}</div>
+    <div style="display:flex;gap:6px;margin-top:16px"><span style="width:52px;height:6px;border-radius:3px;background:#009CE4"></span><span style="width:24px;height:6px;border-radius:3px;background:#E4003C"></span><span style="width:14px;height:6px;border-radius:3px;background:#FC6000"></span></div>
+    <div style="margin-top:24px;font-size:15px;color:var(--ink);line-height:1.5;max-width:560px">a complété avec succès la validation d'acquis pour être certifié pour la solution</div>
+    <div style="margin-top:12px;font-family:'Outfit',sans-serif;font-weight:700;font-size:27px;color:var(--navy)">{{ ligne1 }}</div>
+    <div style="font-family:'Outfit',sans-serif;font-weight:500;font-size:18px;color:var(--ink);margin-top:2px">{{ ligne2 }}</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 60px 40px">
+    <div><div style="font-size:13.5px;font-weight:600;color:var(--ink)">Le {{ date_txt }}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">N° {{ numero }}</div></div>
+    <div style="text-align:right"><div style="font-weight:700;font-size:13.5px;color:var(--navy)">AXE Informatique</div><div style="font-size:12px;color:var(--muted)">Service consulting</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-top:1px">Gagnez en liberté</div></div>
+  </div>
+</div>
+
+{# ============================ 4 — Liseré latéral ============================ #}
+{% elif modele == 4 %}
+<div class="card" style="font-family:'Sora',sans-serif;display:flex">
+  <div style="width:14px;height:100%;background:linear-gradient(180deg,#009CE4 0 55%,#E4003C 55% 80%,#FC6000 80% 100%)"></div>
+  <div style="flex:1;padding:54px 62px;position:relative;display:flex;flex-direction:column">
+    <svg viewBox="0 0 100 100" style="position:absolute;right:58px;bottom:120px;width:150px;height:150px"><polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/><polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/><polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <img src="{{ logo_data_uri }}" style="height:46px;object-fit:contain">
+      <div style="display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;padding:9px 18px 9px 14px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.5px">
+        <svg viewBox="0 0 24 24" style="width:19px;height:19px"><circle cx="12" cy="12" r="11" fill="#009CE4"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>CERTIFIÉ</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:620px">
+      <div style="font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--cyan)">Certification · AXE Informatique</div>
+      <div style="font-size:14px;color:var(--muted);margin-top:20px">Décerné à</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:58px;line-height:1;color:var(--navy);margin-top:4px">{{ nom_complet }}</div>
+      <div style="margin-top:20px;font-size:15px;color:var(--ink);line-height:1.5">a complété avec succès la validation d'acquis pour être certifié pour la solution</div>
+      <div style="margin-top:12px;font-family:'Outfit',sans-serif;font-weight:700;font-size:27px;color:var(--navy)">{{ ligne1 }}</div>
+      <div style="font-family:'Outfit',sans-serif;font-weight:500;font-size:18px;color:var(--ink);margin-top:2px">{{ ligne2 }}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);padding-top:16px">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--ink)">Le {{ date_txt }}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">N° {{ numero }}</div></div>
+      <div style="text-align:right"><div style="font-weight:700;font-size:13.5px;color:var(--navy)">AXE Informatique</div><div style="font-size:12px;color:var(--muted)">Service consulting</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-top:1px">Gagnez en liberté</div></div>
+    </div>
+  </div>
+</div>
+
+{# ============================ 5 — Navy moderne (sombre) ============================ #}
+{% elif modele == 5 %}
+<div class="card" style="font-family:'Sora',sans-serif;background:#002c4a;color:#fff;padding:54px 66px;display:flex;flex-direction:column">
+  <div style="position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#009CE4 0 55%,#E4003C 55% 80%,#FC6000 80% 100%)"></div>
+  <svg viewBox="0 0 100 100" style="position:absolute;right:66px;top:228px;width:262px;height:262px"><polygon points="50,3 95,26 50,49 5,26" fill="#009CE4"/><polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/><polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+  <div style="position:absolute;right:300px;top:198px">{{ cube(42) }}</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2">
+    <img src="{{ logo_data_uri }}" style="height:44px;object-fit:contain;background:#fff;padding:9px 13px;border-radius:10px">
+    <div style="display:inline-flex;align-items:center;gap:9px;background:#009CE4;color:#002c4a;padding:9px 18px 9px 14px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.5px">
+      <svg viewBox="0 0 24 24" style="width:19px;height:19px"><circle cx="12" cy="12" r="11" fill="#fff"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#002c4a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>CERTIFIÉ</div>
+  </div>
+  <div style="position:relative;z-index:2;margin-top:50px;max-width:600px;flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:#58c6f2">Certification · AXE Informatique</div>
+    <div style="font-size:14px;color:#9fb4c7;margin-top:22px">Décerné à</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:60px;line-height:1;color:#fff;margin-top:4px">{{ nom_complet }}</div>
+    <div style="display:flex;gap:6px;margin-top:18px"><span style="width:52px;height:6px;border-radius:3px;background:#009CE4"></span><span style="width:24px;height:6px;border-radius:3px;background:#E4003C"></span><span style="width:14px;height:6px;border-radius:3px;background:#FC6000"></span></div>
+    <div style="margin-top:26px;font-size:15px;color:#cdd9e5;line-height:1.5">a complété avec succès la validation d'acquis<br>pour être certifié pour la solution</div>
+    <div style="margin-top:14px;font-family:'Outfit',sans-serif;font-weight:700;font-size:28px;color:#fff">{{ ligne1 }}</div>
+    <div style="font-family:'Outfit',sans-serif;font-weight:500;font-size:19px;color:#cdd9e5;margin-top:2px">{{ ligne2 }}</div>
+  </div>
+  <div style="position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid rgba(255,255,255,.16);padding-top:18px">
+    <div><div style="font-size:14px;font-weight:600;color:#fff">Le {{ date_txt }}</div><div style="font-size:12px;color:#9fb4c7;margin-top:3px">N° {{ numero }}</div></div>
+    <div style="text-align:right">
+      <div style="width:200px;margin-left:auto">
+        <div style="font-weight:700;font-size:14px;color:#fff">AXE Informatique</div>
+        <div style="font-size:12px;color:#9fb4c7">Service consulting</div>
+        <div style="font-size:11px;font-style:italic;color:#9fb4c7;margin-top:1px">Gagnez en liberté</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card" style="display:flex;align-items:center;justify-content:center">
+  <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:40px;color:var(--navy)">{{ nom_complet }}</div>
+</div>
+{% endif %}
+</body></html>

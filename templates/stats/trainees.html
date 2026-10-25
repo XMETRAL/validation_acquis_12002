@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Stagiaires{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Stagiaires</h1>
+    <p class="muted">{{ rows|length }} stagiaire(s). Cliquez sur un stagiaire pour voir son parcours et ses certifications.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('stats.overview') }}">Statistiques</a>
+</div>
+
+<div class="card">
+  <form method="get" class="btn-row" style="gap:.5rem;align-items:center;margin:0">
+    <input type="search" name="q" value="{{ q }}" placeholder="Rechercher par nom ou email"
+           aria-label="Rechercher" style="min-width:260px">
+    <button class="btn btn-blue btn-sm" type="submit">Rechercher</button>
+    {% if q %}<a class="btn btn-ghost btn-sm" href="{{ url_for('stats.trainees') }}">Réinitialiser</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  {% if not rows %}
+    <div class="empty">Aucun stagiaire{% if q %} pour « {{ q }} »{% endif %}.</div>
+  {% else %}
+  <table>
+    <thead><tr><th>Stagiaire</th><th>Email</th><th>Tentatives</th><th>Réussis</th><th>Dernier passage</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><a href="{{ url_for('stats.trainee', email=r.email) }}">{{ r.name or r.email }}</a></td>
+        <td class="muted small">{{ r.email }}</td>
+        <td>{{ r.attempts }}</td>
+        <td style="font-weight:700">{{ r.passed }}</td>
+        <td class="muted small">{{ r.last.strftime('%d/%m/%Y') }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

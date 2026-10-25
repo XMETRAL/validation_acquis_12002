@@ -30,7 +30,7 @@
       </p>
       <p style="font-weight:600;margin:.35rem 0">{{ d.question.text }}</p>
 
-      {% for c in d.question.choices %}
+      {% for c in d.choices %}
         {% set chosen = c.id in d.selected_ids %}
         {% set good = c.id in d.correct_ids %}
         <div class="choice {{ 'correct' if good else ('wrong' if chosen else '') }}" style="cursor:default">
@@ -52,6 +52,49 @@
       {% endif %}
     </div>
     {% endfor %}
+
+    {% if diploma_ok %}
+    <hr style="border:none;border-top:1px solid var(--border);margin:1.4rem 0">
+    <h2 style="font-size:1.15rem">Votre certification</h2>
+    <p class="muted">Félicitations ! Choisissez le modèle qui vous plaît, puis téléchargez-le en PDF.</p>
+
+    <style>
+      .dip-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:1rem}
+      @media(max-width:560px){.dip-gallery{grid-template-columns:1fr}}
+      .dip-card{border:2px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+      .dip-frame-wrap{position:relative;width:100%;padding-top:70.7%;background:#f4f6fa;overflow:hidden}
+      .dip-frame-wrap iframe{position:absolute;top:0;left:0;width:1000px;height:707px;border:0;transform-origin:top left}
+      .dip-card .lbl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px}
+      .dip-card .lbl b{font-size:.92rem}
+    </style>
+    <div class="dip-gallery">
+      {% for n, label in diploma_models %}
+      <div class="dip-card" data-modele="{{ n }}">
+        <div class="dip-frame-wrap">
+          <iframe loading="lazy" scrolling="no" tabindex="-1"
+                  src="{{ url_for('public.diploma_preview', token=form.public_token, modele=n) }}"></iframe>
+        </div>
+        <div class="lbl">
+          <b>{{ label }}</b>
+          <a class="btn btn-primary btn-sm" href="{{ url_for('public.diploma', token=form.public_token, modele=n) }}">Télécharger</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <script>
+      (function(){
+        function fit(){
+          document.querySelectorAll('.dip-frame-wrap').forEach(function(w){
+            var f=w.querySelector('iframe'); if(!f) return;
+            f.style.transform='scale('+(w.clientWidth/1000)+')';
+          });
+        }
+        window.addEventListener('resize',fit);
+        window.addEventListener('load',fit);
+        setTimeout(fit,60); setTimeout(fit,400);
+      })();
+    </script>
+    {% endif %}
 
     <div class="btn-row" style="margin-top:1.4rem">
       <a class="btn btn-ghost" href="{{ url_for('public.start', token=form.public_token) }}">Recommencer</a>

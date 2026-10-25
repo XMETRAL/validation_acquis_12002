@@ -4,19 +4,61 @@
 <div class="page-head">
   <div>
     <h1>Tableau de bord</h1>
-    <p class="muted">Bonjour {{ current_user.name }}. Gérez vos thèmes et formulaires.</p>
+    <p class="muted">Bonjour {{ current_user.name }}. Gérez vos logiciels et formulaires.</p>
   </div>
   {% if current_user.is_super_admin %}
-  <a class="btn btn-primary" href="{{ url_for('admin.theme_create') }}">+ Nouveau thème</a>
+  <a class="btn btn-primary" href="{{ url_for('admin.theme_create') }}">+ Nouveau logiciel</a>
   {% endif %}
+</div>
+
+<style>
+  .act-card{position:relative;overflow:hidden;background:linear-gradient(135deg,#004878 0%,#003152 100%);
+    color:#fff;border-radius:16px;padding:22px 26px 18px;margin-bottom:22px;box-shadow:0 14px 34px rgba(0,49,82,.22)}
+  .act-card .deco{position:absolute;right:-26px;top:-30px;width:150px;height:150px;opacity:.14}
+  .act-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;position:relative;z-index:2}
+  .act-head .t{font-size:.82rem;letter-spacing:.5px;text-transform:uppercase;color:#9fc6e4;font-weight:600}
+  .act-head .big{font-size:2.1rem;font-weight:800;line-height:1;margin-top:4px}
+  .act-head .sub{font-size:.8rem;color:#cfe0ef}
+  .bars{position:relative;z-index:2;margin-top:20px;display:flex;align-items:flex-end;gap:2.2%;height:150px}
+  .bars .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bars .val{font-size:.72rem;font-weight:700;color:#eaf4fb;margin-bottom:5px;min-height:1em}
+  .bars .bar{width:72%;max-width:34px;border-radius:7px 7px 3px 3px;
+    background:linear-gradient(180deg,#39c0f5 0%,#009CE4 55%,#0082c4 100%);
+    box-shadow:0 4px 12px rgba(0,156,228,.4);transition:filter .15s;min-height:3px}
+  .bars .col:hover .bar{filter:brightness(1.12)}
+  .bars .col.cur .bar{background:linear-gradient(180deg,#ff8a5c 0%,#FC6000 60%,#E4003C 100%);
+    box-shadow:0 4px 14px rgba(252,96,0,.45)}
+  .bars .lbl{font-size:.68rem;color:#aec6dc;margin-top:7px;white-space:nowrap}
+  .bars .col.cur .lbl{color:#ffd9c6;font-weight:700}
+</style>
+
+<div class="act-card">
+  <svg viewBox="0 0 100 100" class="deco"><polygon points="50,3 95,26 50,49 5,26" fill="#39c0f5"/><polygon points="5,26 50,49 50,97 5,74" fill="#E4003C"/><polygon points="95,26 50,49 50,97 95,74" fill="#FC6000"/></svg>
+  <div class="act-head">
+    <div>
+      <div class="t">Tests réalisés</div>
+      <div class="big">{{ monthly_total }}</div>
+      <div class="sub">sur les 12 derniers mois</div>
+    </div>
+    <div class="sub" style="text-align:right">Activité mensuelle</div>
+  </div>
+  <div class="bars">
+    {% for m in monthly %}
+    <div class="col {{ 'cur' if loop.last }}" title="{{ m.ym }} : {{ m.count }} test(s)">
+      <div class="val">{{ m.count or '' }}</div>
+      <div class="bar" style="height:{{ (6 + (m.count / monthly_max * 94)) if monthly_max else 2 }}%"></div>
+      <div class="lbl">{{ m.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 
 {% if not themes %}
   <div class="card empty">
     {% if current_user.is_super_admin %}
-      Aucun thème pour le moment. Créez-en un pour démarrer.
+      Aucun logiciel pour le moment. Créez-en un pour démarrer.
     {% else %}
-      Aucun thème ne vous est attribué. Contactez un super administrateur.
+      Aucun logiciel ne vous est attribué. Contactez un super administrateur.
     {% endif %}
   </div>
 {% else %}
@@ -49,7 +91,7 @@
 
       <div class="btn-row" style="margin-top:1rem">
         <a class="btn btn-blue btn-sm" href="{{ url_for('admin.form_create', theme_id=theme.id) }}">+ Formulaire</a>
-        <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.theme_edit', theme_id=theme.id) }}">Modifier le thème</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.theme_edit', theme_id=theme.id) }}">Modifier le logiciel</a>
         <a class="btn btn-ghost btn-sm" href="{{ url_for('stats.by_theme', theme_id=theme.id) }}">Statistiques</a>
       </div>
     </div>

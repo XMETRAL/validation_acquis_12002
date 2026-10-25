@@ -68,6 +68,8 @@ class Theme(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, default="")
+    diploma_line1 = db.Column(db.String(200), default="")  # diplôme : 1re ligne
+    diploma_line2 = db.Column(db.String(200), default="")  # diplôme : 2e ligne (défaut)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     admins = db.relationship("User", secondary=user_themes, back_populates="themes")
@@ -81,8 +83,11 @@ class Formulaire(db.Model):
     """Un formulaire qui regroupe plusieurs questions."""
     id = db.Column(db.Integer, primary_key=True)
     theme_id = db.Column(db.Integer, db.ForeignKey("theme.id", ondelete="CASCADE"), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.String(200), nullable=False)  # = Formation (ligne 2 du diplôme)
     description = db.Column(db.Text, default="")
+    diploma_line1 = db.Column(db.String(200), default="")  # Logiciel (ligne 1 du diplôme)
+    diploma_label = db.Column(db.String(200), default="")  # Formation (ligne 2 du diplôme)
+    diploma_enabled = db.Column(db.Boolean, default=True, nullable=False)  # délivrer un diplôme ?
     success_threshold = db.Column(db.Integer, default=70)  # % de réussite requis
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     public_token = db.Column(db.String(40), unique=True, index=True, nullable=False)
@@ -136,6 +141,9 @@ class Attempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     formulaire_id = db.Column(db.Integer, db.ForeignKey("formulaire.id", ondelete="CASCADE"), nullable=False)
     email = db.Column(db.String(180), nullable=False, index=True)
+    first_name = db.Column(db.String(120), default="")  # prénom du stagiaire
+    last_name = db.Column(db.String(120), default="")   # nom du stagiaire
+    certificate_number = db.Column(db.String(40), nullable=True, index=True)  # n° diplôme (historisé)
     score = db.Column(db.Float, default=0.0)  # pourcentage
     passed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -145,12 +153,33 @@ class Attempt(db.Model):
         "Answer", back_populates="attempt", cascade="all, delete-orphan"
     )
 
+    @property
+    def full_name(self):
+        """Prénom + nom, en repli sur l'email si non renseignés."""
+        parts = [p for p in (self.first_name, self.last_name) if p]
+        return " ".join(parts) if parts else self.email
+
     def recompute(self):
         total = len(self.answers)
         good = sum(1 for a in self.answers if a.is_correct)
         self.score = round(100 * good / total, 1) if total else 0.0
         threshold = self.formulaire.success_threshold if self.formulaire else 0
         self.passed = self.score >= threshold
+
+
+class Diploma(db.Model):
+    """Archive d'un diplôme téléchargé (un enregistrement par tentative + modèle)."""
+    __table_args__ = (db.UniqueConstraint("attempt_id", "modele", name="uq_diploma_attempt_modele"),)
+    id = db.Column(db.Integer, primary_key=True)
+    attempt_id = db.Column(db.Integer, db.ForeignKey("attempt.id", ondelete="CASCADE"), nullable=False, index=True)
+    certificate_number = db.Column(db.String(40), index=True)
+    modele = db.Column(db.Integer, default=1)
+    filename = db.Column(db.String(255))  # fichier PDF sous instance/diplomes/
+    count = db.Column(db.Integer, default=1)  # nombre de téléchargements
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    attempt = db.relationship("Attempt", backref=db.backref("diplomas", cascade="all, delete-orphan"))
 
 
 class Answer(db.Model):
