@@ -426,7 +426,17 @@ def securite():
     import parametres as P
     if request.method == "POST":
         actif = "1" if request.form.get("ip_filtre_actif") == "on" else "0"
-        liste = (request.form.get("ip_autorisees") or "").strip()
+        # Éditeur à deux colonnes : une ligne par IP (champ « ip » + « desc »).
+        ips = request.form.getlist("ip")
+        descs = request.form.getlist("desc")
+        lignes = []
+        for i, ip in enumerate(ips):
+            ip = (ip or "").strip()
+            if not ip:
+                continue
+            desc = (descs[i] if i < len(descs) else "").strip()
+            lignes.append(f"{ip} | {desc}" if desc else ip)
+        liste = "\n".join(lignes)
         P.set_param("ip_filtre_actif", actif)
         P.set_param("ip_autorisees", liste)
         if actif == "1" and not P.parse_liste_ips(liste):
@@ -440,8 +450,7 @@ def securite():
     ip_courante = P.ip_client()
     return render_template("admin/securite.html", actif=actif, liste=liste,
                            ip_courante=ip_courante,
-                           entrees=P.parse_entrees(liste),
-                           nom_dns=P.nom_dns(ip_courante))
+                           entrees=P.parse_entrees(liste))
 
 
 @admin_bp.route("/utilisateurs/<int:user_id>/supprimer", methods=["POST"])

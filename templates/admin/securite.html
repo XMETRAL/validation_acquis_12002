@@ -5,18 +5,26 @@
   <h1>Sécurité — Filtre d'accès par IP</h1>
 </div>
 
-{% if actif and not liste.strip() %}
+{% if actif and not entrees %}
 <div class="flash error">Le filtre est activé mais la liste est vide : <strong>aucune IP n'est bloquée</strong>. Ajoutez au moins une adresse autorisée.</div>
 {% endif %}
+
+<style>
+  .ip-table{width:100%;border-collapse:collapse;margin-top:.6rem}
+  .ip-table th{text-align:left;font-size:.82rem;color:var(--muted);padding:0 8px 6px}
+  .ip-table td{padding:4px 8px 4px 0;vertical-align:middle}
+  .ip-table input{width:100%}
+  .ip-table td.ip input{font-family:monospace}
+  .ip-table td.act{width:40px;text-align:center}
+  .ip-row-del{background:none;border:none;color:var(--red,#E4003C);font-size:1.2rem;cursor:pointer;line-height:1}
+</style>
+
 <div class="card">
   <p style="margin-top:0">IP vue par le serveur (connexion entrante) : <strong id="ip-courante">{{ ip_courante }}</strong>
     <span class="muted small">— 127.0.0.1 si vous accédez à l'app en local.</span></p>
-  <p style="margin:.3rem 0">Nom du poste (DNS inverse) :
-    {% if nom_dns %}<strong>{{ nom_dns }}</strong>{% else %}<span class="muted">non résolu</span>{% endif %}
-    <span class="muted small">— le nom Windows du poste n'est pas transmis par le navigateur ; seul le nom DNS (PTR), quand il est configuré, peut être affiché.</span></p>
   <p style="margin:.4rem 0">Votre IP publique détectée : <strong id="ip-pub" class="muted">détection…</strong>
-    <button type="button" class="btn btn-primary btn-sm" id="btn-add-pub" onclick="ajouterMonIp('ip-pub')" disabled>Ajouter mon IP publique</button>
-    <button type="button" class="btn btn-ghost btn-sm" onclick="ajouterMonIp('ip-courante')">Ajouter l'IP serveur</button></p>
+    <button type="button" class="btn btn-primary btn-sm" id="btn-add-pub" onclick="ajouterLigne(document.getElementById('ip-pub').textContent.trim())" disabled>Ajouter mon IP publique</button>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="ajouterLigne(document.getElementById('ip-courante').textContent.trim())">Ajouter l'IP serveur</button></p>
 
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -25,47 +33,55 @@
       Activer le filtre par IP publique sur la partie administration
     </label>
     <p class="muted small" style="margin:.4rem 0 .8rem">
-      Une entrée par ligne — IP exacte (<code>90.12.34.56</code>) ou plage CIDR (<code>90.12.34.0/24</code>),
-      suivie d'une <strong>description</strong> après une barre verticale pour savoir d'où elle vient :
-      <code>90.12.34.56 | Bureau Grenoble</code>.
-      Toute l'administration est protégée, <strong>y compris la page de connexion</strong> : une IP non autorisée voit une page « Accès refusé » sans formulaire de login.
+      Chaque ligne : une <strong>adresse</strong> — IP exacte (<code>90.12.34.56</code>) ou plage CIDR (<code>90.12.34.0/24</code>) —
+      et sa <strong>description</strong> pour savoir d'où elle vient (ex. « Bureau Grenoble »).
+      Toute l'administration est protégée, <strong>y compris la page de connexion</strong>.
       Les <strong>questionnaires stagiaires</strong> (liens publics) restent accessibles depuis n'importe quelle IP.
       Pensez à ajouter votre propre IP avant d'activer le filtre. L'accès local (<code>127.0.0.1</code>) reste <strong>toujours autorisé</strong>.
       Si le filtre est actif mais la liste <strong>vide</strong>, aucun blocage n'est appliqué (sécurité anti-verrouillage).
     </p>
-    <label for="ip_autorisees">Adresses autorisées</label>
-    <textarea name="ip_autorisees" id="ip_autorisees" rows="8"
-              style="font-family:monospace"
-              placeholder="90.12.34.56 | Bureau Grenoble&#10;80.0.0.0/24 | Agence Lyon">{{ liste }}</textarea>
+
+    <table class="ip-table">
+      <thead><tr><th>Adresse / plage</th><th>Description</th><th></th></tr></thead>
+      <tbody id="ip-rows">
+        {% for e in entrees %}
+        <tr>
+          <td class="ip"><input type="text" name="ip" value="{{ e.ip }}" placeholder="90.12.34.56"></td>
+          <td><input type="text" name="desc" value="{{ e.desc }}" placeholder="ex. Bureau Grenoble"></td>
+          <td class="act"><button type="button" class="ip-row-del" title="Supprimer" onclick="this.closest('tr').remove()">×</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="btn-row" style="margin-top:.6rem">
+      <button class="btn btn-ghost btn-sm" type="button" onclick="ajouterLigne('')">+ Ajouter une adresse</button>
+    </div>
+
     <div style="margin-top:1rem"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
   </form>
 </div>
 
-{% if entrees %}
-<div class="card" style="margin-top:1rem">
-  <h2 style="font-size:1.1rem">IP autorisées ({{ entrees|length }})</h2>
-  <table>
-    <thead><tr><th>Adresse / plage</th><th>Description</th></tr></thead>
-    <tbody>
-    {% for e in entrees %}
-      <tr>
-        <td style="font-family:monospace">{{ e.ip }}</td>
-        <td>{% if e.desc %}{{ e.desc }}{% else %}<span class="muted small">—</span>{% endif %}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endif %}
+<template id="ip-row-tpl">
+  <tr>
+    <td class="ip"><input type="text" name="ip" placeholder="90.12.34.56"></td>
+    <td><input type="text" name="desc" placeholder="ex. Bureau Grenoble"></td>
+    <td class="act"><button type="button" class="ip-row-del" title="Supprimer" onclick="this.closest('tr').remove()">×</button></td>
+  </tr>
+</template>
 
 <script>
-function ajouterMonIp(srcId){
-  var ip=document.getElementById(srcId).textContent.trim();
-  var ta=document.getElementById('ip_autorisees');
-  if(!ip || !/^[0-9a-fA-F:.]+$/.test(ip)) return;
-  var lignes=ta.value.split('\n').map(function(l){return l.trim();});
-  if(lignes.indexOf(ip)>=0) return;
-  ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+ip;
+function ajouterLigne(ip){
+  var tbody=document.getElementById('ip-rows');
+  // éviter un doublon d'IP
+  if(ip){
+    var exist=Array.prototype.some.call(tbody.querySelectorAll('input[name=ip]'),
+      function(i){return i.value.trim()===ip;});
+    if(exist) return;
+  }
+  var frag=document.getElementById('ip-row-tpl').content.cloneNode(true);
+  if(ip) frag.querySelector('input[name=ip]').value=ip;
+  tbody.appendChild(frag);
+  if(!ip){ var inputs=tbody.querySelectorAll('tr:last-child input'); if(inputs[0]) inputs[0].focus(); }
 }
 // Détection de l'IP publique côté navigateur (service externe).
 (function(){
