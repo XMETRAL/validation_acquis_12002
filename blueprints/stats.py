@@ -114,9 +114,12 @@ def overview():
          for p in per.values()),
         key=lambda x: x["count"], reverse=True)
     per_max = max((p["count"] for p in per_theme), default=0)
+    # 10 derniers tests réalisés (toutes formations confondues)
+    recents = sorted(attempts, key=lambda a: a.created_at, reverse=True)[:10]
     return render_template("stats/overview.html", data=data, kpis=kpis,
                            monthly=monthly, monthly_max=monthly_max,
-                           per_theme=per_theme, per_max=per_max)
+                           per_theme=per_theme, per_max=per_max,
+                           recents=recents)
 
 
 # --------------------------------------------------------------------------- #

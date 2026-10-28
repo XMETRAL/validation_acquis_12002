@@ -101,6 +101,28 @@
   {% endfor %}
 </div>
 {% endif %}
+
+{% if recents %}
+<div class="chartcard" style="margin-bottom:18px">
+  <h2>10 derniers tests réalisés</h2>
+  <div class="cap">Les tentatives les plus récentes, toutes formations confondues</div>
+  <table>
+    <thead><tr><th>Date</th><th>Stagiaire</th><th>Formation</th><th>Score</th><th>Résultat</th><th></th></tr></thead>
+    <tbody>
+      {% for a in recents %}
+      <tr>
+        <td class="small muted">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>{{ a.full_name }}<br><span class="small muted">{{ a.email }}</span></td>
+        <td class="small">{{ a.formulaire.theme.name }} — {{ a.formulaire.title }}</td>
+        <td>{{ a.score }}%</td>
+        <td>{% if a.passed %}<span class="badge ok">Réussi</span>{% else %}<span class="badge ko">Échec</span>{% endif %}</td>
+        <td style="text-align:right"><a class="btn btn-ghost btn-sm" href="{{ url_for('stats.attempt_detail', attempt_id=a.id) }}">Consulter</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endif %}
 
 {% if not data %}
