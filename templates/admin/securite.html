@@ -11,6 +11,9 @@
 <div class="card">
   <p style="margin-top:0">IP vue par le serveur (connexion entrante) : <strong id="ip-courante">{{ ip_courante }}</strong>
     <span class="muted small">— 127.0.0.1 si vous accédez à l'app en local.</span></p>
+  <p style="margin:.3rem 0">Nom du poste (DNS inverse) :
+    {% if nom_dns %}<strong>{{ nom_dns }}</strong>{% else %}<span class="muted">non résolu</span>{% endif %}
+    <span class="muted small">— le nom Windows du poste n'est pas transmis par le navigateur ; seul le nom DNS (PTR), quand il est configuré, peut être affiché.</span></p>
   <p style="margin:.4rem 0">Votre IP publique détectée : <strong id="ip-pub" class="muted">détection…</strong>
     <button type="button" class="btn btn-primary btn-sm" id="btn-add-pub" onclick="ajouterMonIp('ip-pub')" disabled>Ajouter mon IP publique</button>
     <button type="button" class="btn btn-ghost btn-sm" onclick="ajouterMonIp('ip-courante')">Ajouter l'IP serveur</button></p>
@@ -22,7 +25,9 @@
       Activer le filtre par IP publique sur la partie administration
     </label>
     <p class="muted small" style="margin:.4rem 0 .8rem">
-      Une entrée par ligne — IP exacte (<code>90.12.34.56</code>) ou plage CIDR (<code>90.12.34.0/24</code>).
+      Une entrée par ligne — IP exacte (<code>90.12.34.56</code>) ou plage CIDR (<code>90.12.34.0/24</code>),
+      suivie d'une <strong>description</strong> après une barre verticale pour savoir d'où elle vient :
+      <code>90.12.34.56 | Bureau Grenoble</code>.
       Toute l'administration est protégée, <strong>y compris la page de connexion</strong> : une IP non autorisée voit une page « Accès refusé » sans formulaire de login.
       Les <strong>questionnaires stagiaires</strong> (liens publics) restent accessibles depuis n'importe quelle IP.
       Pensez à ajouter votre propre IP avant d'activer le filtre. L'accès local (<code>127.0.0.1</code>) reste <strong>toujours autorisé</strong>.
@@ -31,10 +36,27 @@
     <label for="ip_autorisees">Adresses autorisées</label>
     <textarea name="ip_autorisees" id="ip_autorisees" rows="8"
               style="font-family:monospace"
-              placeholder="90.12.34.56&#10;80.0.0.0/24">{{ liste }}</textarea>
+              placeholder="90.12.34.56 | Bureau Grenoble&#10;80.0.0.0/24 | Agence Lyon">{{ liste }}</textarea>
     <div style="margin-top:1rem"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
   </form>
 </div>
+
+{% if entrees %}
+<div class="card" style="margin-top:1rem">
+  <h2 style="font-size:1.1rem">IP autorisées ({{ entrees|length }})</h2>
+  <table>
+    <thead><tr><th>Adresse / plage</th><th>Description</th></tr></thead>
+    <tbody>
+    {% for e in entrees %}
+      <tr>
+        <td style="font-family:monospace">{{ e.ip }}</td>
+        <td>{% if e.desc %}{{ e.desc }}{% else %}<span class="muted small">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
 <script>
 function ajouterMonIp(srcId){

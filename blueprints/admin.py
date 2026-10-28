@@ -437,8 +437,11 @@ def securite():
         return redirect(url_for("admin.securite"))
     actif = P.get_param("ip_filtre_actif", "0") == "1"
     liste = P.get_param("ip_autorisees", "") or ""
+    ip_courante = P.ip_client()
     return render_template("admin/securite.html", actif=actif, liste=liste,
-                           ip_courante=P.ip_client())
+                           ip_courante=ip_courante,
+                           entrees=P.parse_entrees(liste),
+                           nom_dns=P.nom_dns(ip_courante))
 
 
 @admin_bp.route("/utilisateurs/<int:user_id>/supprimer", methods=["POST"])
